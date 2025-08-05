@@ -1,14 +1,14 @@
 spring:
   datasource:
     hikari.schema: public
-    url: jdbc:postgresql://localhost:5432/project_management_ipf?serverTimezone=UTC
+    url: jdbc:postgresql://localhost:5432/project_management_bayport?serverTimezone=UTC
     username: postgres
-    password:
+    password: SOMI
   #Email service
   mail:
     host: smtp.gmail.com
-    username:
-    password:
+    username: nicholaussomi5
+    password: rjxfmhmlcwzrdmhi
     properties:
       mail:
         transport.protocol: smtp

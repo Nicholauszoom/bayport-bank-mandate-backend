@@ -8,13 +8,13 @@
 		<version>3.2.0</version>
 	</parent>
 	<groupId>com.dflex</groupId>
-	<artifactId>emkopo</artifactId>
+	<artifactId>bayport</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Project-Management-Ipf</name>
 	<packaging>jar</packaging>
 	<description>Project-Management-Ipf</description>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -126,7 +126,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.30</version>
+			<version>1.18.38</version>
 			<scope>provided</scope>
 		</dependency>
 		<!--		<dependency>-->
@@ -158,10 +158,10 @@
 			<scope>runtime</scope>
 		</dependency>
 		<!-- RabbitMQ -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-amqp</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-amqp</artifactId>-->
+<!--		</dependency>-->
 
 
 		<dependency>
@@ -182,7 +182,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
+<!--			<scope>provided</scope>-->
 		</dependency>
 	</dependencies>
 	<build>
