@@ -7,16 +7,22 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -32,7 +38,6 @@ public class JwtService {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
-
 
     public String generateToken(UserDetails userDetails){
         return generateToken(new HashMap<>(), userDetails);
@@ -50,8 +55,30 @@ public class JwtService {
             Map<String, Object> extraClaims,
             UserDetails userDetails,
             String expiration
-            ){
-        long expirationMillis = Long.parseLong(expiration); // Convert to long
+    ) {
+        long expirationMillis = Long.parseLong(expiration);
+
+        // DEBUG: Check what authorities are available during token creation
+        System.out.println("=== JWT CREATION DEBUG ===");
+        System.out.println("UserDetails class: " + userDetails.getClass().getSimpleName());
+        System.out.println("Username: " + userDetails.getUsername());
+        System.out.println("Authorities: " + userDetails.getAuthorities());
+        System.out.println("Authorities size: " + userDetails.getAuthorities().size());
+        System.out.println("Authorities isEmpty: " + userDetails.getAuthorities().isEmpty());
+
+        // Include roles in the claims
+        List<String> roles = userDetails.getAuthorities()
+                .stream()
+                .map(authority -> {
+                    System.out.println("Processing authority: " + authority.getAuthority());
+                    return authority.getAuthority();
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("Extracted roles: " + roles);
+        extraClaims.put("roles", roles);
+        System.out.println("=========================");
+
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
@@ -62,10 +89,20 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails){
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+//    public boolean isTokenValid(String token, UserDetails userDetails){
+//        final String username = extractUsername(token);
+//        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+//    }
+
+public boolean isTokenValid(String token, String username) {
+    try {
+        Claims claims = extractAllClaims(token);
+        return claims.getSubject().equals(username) && !claims.getExpiration().before(new Date());
+    } catch (Exception e) {
+        log.error("Token validation failed: {}", e.getMessage());
+        return false;
     }
+}
 
     private boolean isTokenExpired(String token){
         return extractExpiration(token).before(new Date());

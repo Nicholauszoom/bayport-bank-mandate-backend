@@ -21,7 +21,7 @@ public class CustomAnnotations {
 
     @Target({ElementType.METHOD, ElementType.TYPE})
     @Retention(RetentionPolicy.RUNTIME)
-    @PreAuthorize("hasAnyRole({roles})")
+    @PreAuthorize("hasAnyAuthority({roles})")
     public @interface RequireRole {
         Role[] value();
     }

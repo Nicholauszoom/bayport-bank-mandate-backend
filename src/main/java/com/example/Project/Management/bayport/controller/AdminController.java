@@ -1,8 +1,5 @@
 package com.example.Project.Management.bayport.controller;
 
-import com.example.Project.Management.bayport.annotation.CustomAnnotations;
-import com.example.Project.Management.bayport.auth.enumerated.Permission;
-import com.example.Project.Management.bayport.auth.enumerated.Role;
 import com.example.Project.Management.bayport.auth.user.dto.UserDto;
 import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.auth.user.service.UserService;
@@ -10,10 +7,8 @@ import com.example.Project.Management.bayport.config.JwtAuthenticationFilter;
 import com.example.Project.Management.bayport.project.dto.ProjectDto;
 import com.example.Project.Management.bayport.project.entity.Project;
 import com.example.Project.Management.bayport.project.service.ProjectService;
-import com.example.Project.Management.bayport.util.Response;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,30 +17,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin")
+@Slf4j
 //@CustomAnnotations.RequireRole(Role.ADMIN)
 public class AdminController {
     private final UserService userService;
 
     private final ProjectService projectService;
 
-    private final MessageSource messageSource;
-
-    String status = "";
-    String message = "";
-    Boolean error = false;
-
-    Locale currentLocale = LocaleContextHolder.getLocale();
-
-    public AdminController(UserService userService, ProjectService projectService, MessageSource messageSource) {
+    public AdminController(UserService userService, ProjectService projectService) {
         this.userService = userService;
         this.projectService = projectService;
-        this.messageSource = messageSource;
     }
 
     @GetMapping("/user/list")
@@ -55,9 +40,8 @@ public class AdminController {
         List<UserDto> userDtoArrayList = new ArrayList<>();
         try {
             List<User> users = userService.findAll();
-            System.out.println("Users" + users);
-            if (users != null) {
 
+            if (users != null) {
                 for (User user : users) {
                     UserDto userDto = new UserDto();
                     userDto.setId(user.getId());
@@ -65,28 +49,21 @@ public class AdminController {
                     userDto.setEmail(user.getEmail());
                     userDto.setRole(user.getRole().name());
                     userDtoArrayList.add(userDto);
-
                 }
-                message = messageSource.getMessage("message.1001", null, currentLocale);
-                status = messageSource.getMessage("code.1001", null, currentLocale);
-                error = false;
+                log.info("success fetch user list");
+                return ResponseEntity.ok(userDtoArrayList);
             } else {
-                message = messageSource.getMessage("message.1007", null, currentLocale);
-                status = messageSource.getMessage("code.1007", null, currentLocale);
-                error = true;
+                log.info("no user found");
+               return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no user found");
             }
 
         } catch (Exception e) {
-            message = messageSource.getMessage("message.1004", null, currentLocale);
-            status = messageSource.getMessage("code.1004", null, currentLocale);
-            error = true;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user found: " + e.getMessage());
         }
-        Response response = new Response(String.valueOf(Calendar.getInstance().getTime()), status, error, message, userDtoArrayList, request.getRequestURI());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/project/list")
-    @CustomAnnotations.RequirePermission(Permission.VIEW_ALL_PROJECTS)
+//    @CustomAnnotations.RequirePermission(Permission.VIEW_ALL_PROJECTS)
     public ResponseEntity<?> getProjectList(HttpServletRequest request) {
 
         List<ProjectDto> projectDtoArrayList = new ArrayList<>();
@@ -105,21 +82,16 @@ public class AdminController {
                     projectDtoArrayList.add(projectDto);
 
                 }
-                message = messageSource.getMessage("message.1001", null, currentLocale);
-                status = messageSource.getMessage("code.1001", null, currentLocale);
-                error = false;
+                log.info("success fetch projects");
+                return ResponseEntity.ok(projects);
             } else {
-                message = messageSource.getMessage("message.1007", null, currentLocale);
-                status = messageSource.getMessage("code.1007", null, currentLocale);
-                error = true;
+                log.info("no project found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("no project found");
             }
 
         } catch (Exception e) {
-            message = messageSource.getMessage("message.1004", null, currentLocale);
-            status = messageSource.getMessage("code.1004", null, currentLocale);
-            error = true;
+            log.info("fail fetch projects");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("fail fetch projects" + e.getMessage());
         }
-        Response response = new Response(String.valueOf(Calendar.getInstance().getTime()), status, error, message, projectDtoArrayList, request.getRequestURI());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
