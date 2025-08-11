@@ -28,6 +28,9 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column( nullable = false)
+    private String fullName;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -48,14 +51,23 @@ public class User implements UserDetails {
 
 
     //constructor for creating an unverified user
-    public User(String username, String email, String password) {
+    public User(String username, String email, String password, String fullName) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.fullName = fullName;
     }
 
     public User() {
 
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     @Override

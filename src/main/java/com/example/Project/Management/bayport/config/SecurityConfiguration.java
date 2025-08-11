@@ -33,20 +33,18 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public endpoints
+
                         .requestMatchers("/auth/**", "/public/**", "/health").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/user/**").hasAnyAuthority("ADMIN", "MANAGER")
 
-                        // Admin endpoints - require ADMIN role
-                        .requestMatchers("/admin/**","/api/user/**").hasAuthority("ADMIN")
-
-                        // API endpoints with role-based access
                         .requestMatchers(HttpMethod.GET, "/api/project/**").hasAnyAuthority("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/project").hasAnyAuthority("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/project/**").hasAnyAuthority("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/project/**").hasAuthority("ADMIN")
-
-                        // All other requests require authentication
+                        .requestMatchers("/api/user/detail").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -60,6 +58,19 @@ public class SecurityConfiguration {
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean

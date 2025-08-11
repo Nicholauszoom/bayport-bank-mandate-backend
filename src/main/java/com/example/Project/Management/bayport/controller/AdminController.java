@@ -45,7 +45,7 @@ public class AdminController {
                 for (User user : users) {
                     UserDto userDto = new UserDto();
                     userDto.setId(user.getId());
-                    userDto.setUserName(user.getUsername());
+                    userDto.setUserName(user.getFullName());
                     userDto.setEmail(user.getEmail());
                     userDto.setRole(user.getRole().name());
                     userDtoArrayList.add(userDto);

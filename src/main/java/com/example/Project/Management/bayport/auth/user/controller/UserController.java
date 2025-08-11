@@ -4,13 +4,11 @@ import com.example.Project.Management.bayport.auth.enumerated.Role;
 import com.example.Project.Management.bayport.auth.user.dto.UserDto;
 import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.auth.user.service.UserService;
-import com.example.Project.Management.bayport.config.JwtAuthenticationFilter;
 import com.example.Project.Management.bayport.util.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,7 +31,6 @@ public class UserController {
     String message = null;
     String status = null;
     Boolean isError = false;
-    Locale currentLocale = LocaleContextHolder.getLocale();
 
     public UserController(UserService userService, MessageSource messageSource) {
         this.userService = userService;
@@ -87,5 +84,36 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
 
     }
+
+    @GetMapping("/detail")
+    public ResponseEntity<?> getUserDetails(Authentication authentication) {
+        if(authentication == null || !authentication.isAuthenticated()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        String username = authentication.getName();
+
+        log.info("username : {}", username);
+
+        Optional<User> userOpt = userService.findByEmail(username);
+
+        if(userOpt.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOpt.get();
+
+        UserDto userDtoDetails = UserDto.builder()
+                .id(user.getId())
+                .role(user.getRole().name())
+                .email(user.getEmail())
+                .userName(user.getFullName())
+                .build();
+
+        log.info("userDtoDetails : {}", userDtoDetails);
+
+        return ResponseEntity.ok(userDtoDetails);
+    }
+
 
 }

@@ -12,6 +12,7 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Builder
 public class UserDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
