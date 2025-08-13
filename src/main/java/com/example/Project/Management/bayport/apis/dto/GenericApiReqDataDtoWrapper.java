@@ -1,0 +1,25 @@
+package com.dflex.emkopo.api.dto;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import lombok.*;
+
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
+@XmlRootElement(name = "Document")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class GenericApiReqDataDtoWrapper {
+
+    @XmlElement(name = "Data")
+    private GenericApiReqDataDto requestData;
+
+    @XmlElement(name = "Signature")
+    private String messageHash;
+}

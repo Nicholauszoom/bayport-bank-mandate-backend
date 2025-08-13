@@ -1,0 +1,28 @@
+package com.dflex.emkopo.app.borrower.dto.AccountValidation;
+
+import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
+import com.dflex.emkopo.app.loan.dto.registration.LoanRegistrationReqDetailDto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
+@XmlRootElement(name = "Data")
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class AccountValidationApiReqDataDto {
+
+    @XmlElement(name = "Header")
+    private ApiReqHeaderDto requestHeader;
+
+    @XmlElement(name = "MessageDetails")
+    private AccountValidationApiReqDetailDto accountValidationApiReqDetailDto;
+}
