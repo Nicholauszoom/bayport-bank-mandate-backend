@@ -1,15 +1,15 @@
-package com.dflex.emkopo.app.fsp.services;
+package com.example.Project.Management.bayport.fsp.services;
+
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProviderCategory;
+import com.example.Project.Management.bayport.fsp.models.forms.FspCategoryForm;
+import com.example.Project.Management.bayport.fsp.repositories.FSPCategoryRepository;
+import com.example.Project.Management.bayport.service.AuthenticationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import com.dflex.emkopo.app.auth.services.AuthService;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProviderCategory;
-import com.dflex.emkopo.app.fsp.models.forms.FspCategoryForm;
-import com.dflex.emkopo.app.fsp.repositories.FSPCategoryRepository;
-import com.dflex.emkopo.app.users.models.User;
-import com.dflex.emkopo.exceptions.NotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 /**
  * 
@@ -19,23 +19,24 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class FSPCategoryServiceImpl implements FSPCategoryService {
-	private final AuthService authService;
+	private final AuthenticationService authService;
 	
 	@Autowired
 	private FSPCategoryRepository fspCategoryRepository;
 
 	@Autowired
-    public FSPCategoryServiceImpl(AuthService authService) {
+    public FSPCategoryServiceImpl(AuthenticationService authService) {
         this.authService = authService;
     }
 
     @Override
 	public FinancialServiceProviderCategory create(FspCategoryForm fspCategoryForm) {
-		User user = authService.getUser();
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
 		FinancialServiceProviderCategory fspCategory = new FinancialServiceProviderCategory();
 		fspCategory.setCategoryCode(fspCategoryForm.getCode());
 		fspCategory.setCategoryName(fspCategoryForm.getName());
-		fspCategory.setCreatedByUsername(user.getUsername());
+		fspCategory.setCreatedByUsername(username);
 
 		fspCategoryRepository.save(fspCategory);
 		return fspCategory;
@@ -47,31 +48,24 @@ public class FSPCategoryServiceImpl implements FSPCategoryService {
 	}
 
 	@Override
-	public FinancialServiceProviderCategory getById(Long id) {
-		return fspCategoryRepository.findById(id).orElseThrow(() -> new NotFoundException("No financial service provider category exists by id "+id));
+	public Optional<FinancialServiceProviderCategory> getById(Long id) {
+		return fspCategoryRepository.findById(id);
 	}
 
 	@Override
 	public FinancialServiceProviderCategory update(Long fspId, FspCategoryForm fspCategoryForm) {
-		FinancialServiceProviderCategory fspCategory = getById(fspId);
-		fspCategory.setCategoryCode(fspCategoryForm.getCode());
-		fspCategory.setCategoryName(fspCategoryForm.getName());
+		Optional<FinancialServiceProviderCategory> fspCategory = getById(fspId);
+		fspCategory.get().setCategoryCode(fspCategoryForm.getCode());
+		fspCategory.get().setCategoryName(fspCategoryForm.getName());
 
-		fspCategoryRepository.save(fspCategory);
-		return fspCategory;
+		fspCategoryRepository.save(fspCategory.get());
+		return fspCategory.get();
 	}
-
-	@Override
-	public FinancialServiceProviderCategory softDelete(Long fspId) {
-		FinancialServiceProviderCategory fspCategory = getById(fspId);
-		fspCategory.setDeleted(true);
-		fspCategoryRepository.save(fspCategory);
-		return fspCategory;
-	}
+	
 
 	@Override
 	public void hardDelete(Long fspId) {
-		FinancialServiceProviderCategory fspCategory = getById(fspId);
-		fspCategoryRepository.delete(fspCategory);
+		Optional<FinancialServiceProviderCategory> fspCategory = getById(fspId);
+		fspCategoryRepository.delete(fspCategory.get());
 	}
 }

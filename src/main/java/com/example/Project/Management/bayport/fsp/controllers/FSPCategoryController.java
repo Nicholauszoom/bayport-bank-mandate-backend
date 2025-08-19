@@ -1,9 +1,8 @@
-package com.dflex.emkopo.app.fsp.controllers;
+package com.example.Project.Management.bayport.fsp.controllers;
 
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProviderCategory;
-import com.dflex.emkopo.app.fsp.models.forms.FspCategoryForm;
-import com.dflex.emkopo.app.fsp.services.FSPCategoryService;
-import com.dflex.emkopo.commons.models.DataResponse;
+import com.example.Project.Management.bayport.common.entity.DataResponse;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProviderCategory;
+import com.example.Project.Management.bayport.fsp.models.forms.FspCategoryForm;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,14 +13,15 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("fsp-categories")
 public class FSPCategoryController {
-    private final FSPCategoryService fspCategoryService;
+    private final com.example.Project.Management.bayport.fsp.services.FSPCategoryService fspCategoryService;
 
     @Autowired
-    public FSPCategoryController(FSPCategoryService fspCategoryService) {
+    public FSPCategoryController(com.example.Project.Management.bayport.fsp.services.FSPCategoryService fspCategoryService) {
         this.fspCategoryService = fspCategoryService;
     }
 
@@ -46,7 +46,7 @@ public class FSPCategoryController {
     }
 
     @GetMapping("{categoryId}")
-    public ResponseEntity<DataResponse<FinancialServiceProviderCategory>> show(@PathVariable Long categoryId, HttpServletRequest request){
+    public ResponseEntity<DataResponse<Optional<FinancialServiceProviderCategory>>> show(@PathVariable Long categoryId, HttpServletRequest request){
         return ResponseEntity.ok(new DataResponse<>(
                 HttpStatus.OK, "Financial service provider category has been retrieved.",
                 request.getRequestURI(), fspCategoryService.getById(categoryId)

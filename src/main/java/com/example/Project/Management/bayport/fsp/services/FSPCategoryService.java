@@ -1,9 +1,12 @@
-package com.dflex.emkopo.app.fsp.services;
+package com.example.Project.Management.bayport.fsp.services;
 
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProviderCategory;
-import com.dflex.emkopo.app.fsp.models.forms.FspCategoryForm;
+
+
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProviderCategory;
+import com.example.Project.Management.bayport.fsp.models.forms.FspCategoryForm;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 
@@ -27,11 +30,12 @@ public interface FSPCategoryService {
 	List<FinancialServiceProviderCategory> getAll();
 
 	/**
-	 * Retrieves a FSP Category
-	 * @param id - An id used to find FSP Category by id
-	 * @return FinancialServiceProviderCategory
-	 */
-	FinancialServiceProviderCategory getById(Long id);
+     * Retrieves a FSP Category
+     *
+     * @param id - An id used to find FSP Category by id
+     * @return FinancialServiceProviderCategory
+     */
+	Optional<FinancialServiceProviderCategory> getById(Long id);
 
 	/**
 	 * Updates FSP Category
@@ -46,7 +50,6 @@ public interface FSPCategoryService {
 	 * @param fspId ID of the category to be temporarily deleted.
 	 * @return FinancialServiceProviderCategory
 	 */
-	FinancialServiceProviderCategory softDelete(Long fspId);
 
 	/**
 	 * Deletes category and nothing is left.
