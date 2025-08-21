@@ -1,4 +1,4 @@
-package com.example.Project.Management.bayport.loan.dto.charges;
+package com.example.Project.Management.bayport.charge.dto.charges;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 @XmlRootElement(name = "MessageDetails")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LoanChargesApiRespDetailDto {
+    @XmlElement(name = "DesiredDeductibleAmount")
+    private BigDecimal desiredDeductibleAmount;
 
     @XmlElement(name = "TotalInsurance")
     private BigDecimal totalInsurance;
@@ -44,18 +46,5 @@ public class LoanChargesApiRespDetailDto {
 
     @XmlElement(name = "MonthlyReturnAmount")
     private BigDecimal monthlyReturnAmount;
-
-    @XmlElement(name = "DesiredDeductibleAmount")
-    private BigDecimal desiredDeductibleAmount;
-
-
-
-
-
-
-
-
-
-
 
 }

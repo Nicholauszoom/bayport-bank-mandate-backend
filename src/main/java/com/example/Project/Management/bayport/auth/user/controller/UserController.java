@@ -44,7 +44,6 @@ public class UserController {
         return ResponseEntity.ok(currentUser);
     }
 
-
     @PostMapping("/assign_role")
     public ResponseEntity<?> assignUserRole(@RequestBody UserDto userDto, HttpServletRequest request){
 
@@ -107,7 +106,7 @@ public class UserController {
                 .id(user.getId())
                 .role(user.getRole().name())
                 .email(user.getEmail())
-                .userName(user.getFullName())
+                .username(user.getFullName())
                 .build();
 
         log.info("userDtoDetails : {}", userDtoDetails);
@@ -115,5 +114,10 @@ public class UserController {
         return ResponseEntity.ok(userDtoDetails);
     }
 
+    @PostMapping("/{id}/delete")
+    public void deleteCharge(
+            @PathVariable("id") long id) {
+        userService.deleteUser(id);
+    }
 
 }

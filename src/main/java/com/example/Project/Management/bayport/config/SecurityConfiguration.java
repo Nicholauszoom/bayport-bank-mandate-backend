@@ -35,15 +35,24 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/", "/login", "/profile", "/user", "/user-add", "/charge", "/dashboard", "/verify", "/product", "/product-add", "/price-schedule").permitAll()
 
-                        .requestMatchers("/auth/**", "/public/**", "/health").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/user/**").hasAnyAuthority("ADMIN", "MANAGER")
+                        .requestMatchers("/static/**", "/media/**", "/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/project/**").hasAnyAuthority("USER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/project").hasAnyAuthority("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/project/**").hasAnyAuthority("MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/project/**").hasAuthority("ADMIN")
+                        .requestMatchers("/*.js", "/*.css", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.ico").permitAll()
+
+                        .requestMatchers("/main-*.js", "/chunk-*.js", "/polyfills-*.js", "/styles-*.css").permitAll()
+
+                        .requestMatchers("/favicon.ico", "/error", "/index.html").permitAll()
+
+                        .requestMatchers("/api/auth/**", "/public/**", "/health","/api/loans/message/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/user/**", "/api/charge/**").hasAnyAuthority("ADMIN", "MANAGER")
+
+                        .requestMatchers(HttpMethod.GET, "/api/product/**").hasAnyAuthority("USER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/product/create").hasAnyAuthority("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/product/**").hasAnyAuthority("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/user/detail").authenticated()
                         .anyRequest().authenticated()
                 )
@@ -72,6 +81,27 @@ public class SecurityConfiguration {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//
+//        // Add more potential origins
+//        configuration.setAllowedOrigins(List.of(
+//                "http://10.25.32.30:8083",
+//                "http://localhost:8083",
+//                "http://127.0.0.1:8083"
+//        ));
+//
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+//        configuration.setAllowedHeaders(List.of("*"));
+//        configuration.setAllowCredentials(true);
+//        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
 
     @Bean
     public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {

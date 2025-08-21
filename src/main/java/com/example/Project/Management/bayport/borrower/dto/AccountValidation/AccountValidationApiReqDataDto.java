@@ -1,7 +1,6 @@
-package com.dflex.emkopo.app.borrower.dto.AccountValidation;
+package com.example.Project.Management.bayport.borrower.dto.AccountValidation;
 
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
-import com.dflex.emkopo.app.loan.dto.registration.LoanRegistrationReqDetailDto;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

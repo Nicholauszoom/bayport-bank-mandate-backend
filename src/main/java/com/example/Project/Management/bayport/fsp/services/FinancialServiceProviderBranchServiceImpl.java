@@ -1,21 +1,20 @@
-package com.dflex.emkopo.app.fsp.services;
+package com.example.Project.Management.bayport.fsp.services;
 
-
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDto;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDtoWrapper;
-import com.dflex.emkopo.app.fsp.repositories.FinancialServiceProviderRepository;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProviderBranch;
-import com.dflex.emkopo.app.fsp.repositories.FinancialServiceProviderBranchRepository;
-import com.dflex.emkopo.app.setup.dto.BranchDetailDto;
-import com.dflex.emkopo.app.setup.dto.BranchDto;
-import com.dflex.emkopo.app.setup.entity.District;
-import com.dflex.emkopo.app.setup.repository.DistrictRepository;
-import com.dflex.emkopo.commons.utils.Constants;
-import com.dflex.emkopo.commons.utils.DigitalSignature;
-import com.dflex.emkopo.commons.utils.ResponseCodes;
-import com.dflex.emkopo.commons.utils.Utils;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
+import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDto;
+import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.common.Constants;
+import com.example.Project.Management.bayport.common.DigitalSignature;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProviderBranch;
+import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderBranchRepository;
+import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderRepository;
+import com.example.Project.Management.bayport.setup.dto.BranchDetailDto;
+import com.example.Project.Management.bayport.setup.dto.BranchDto;
+import com.example.Project.Management.bayport.setup.entity.District;
+import com.example.Project.Management.bayport.setup.repository.DistrictRepository;
+import com.example.Project.Management.bayport.util.ResponseCodes;
+import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

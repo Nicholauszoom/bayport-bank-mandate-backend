@@ -1,27 +1,9 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import com.dflex.emkopo.commons.utils.CommonEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Augustino Mwageni
@@ -37,25 +19,13 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_pki_certificate")
-public class PKICertificate extends CommonEntity implements Serializable {
-
-	private static final long serialVersionUID = 1L;
+public class PKICertificate implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="pki_certificate_id_generator")
-	@SequenceGenerator(name="pki_certificate_id_generator", sequenceName="seq_pki_certificate", initialValue=1, allocationSize = 1)
+	@SequenceGenerator(name="pki_certificate_id_generator", sequenceName="seq_pki_certificate", allocationSize = 1)
 	@Column(name="id", unique=true, nullable=false, precision=11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="pki_certificate_uid",nullable = false)
-	private UUID pkiCertificateUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setPkiCertificateUid(java.util.UUID.randomUUID());
-    }
 
 	@Column(name="certificate_alias", length=100, nullable=false)
 	private String certificateAlias;

@@ -1,6 +1,6 @@
-package com.dflex.emkopo.app.status.repository;
+package com.example.Project.Management.bayport.status.repository;
 
-import com.dflex.emkopo.app.status.entity.Status;
+import com.example.Project.Management.bayport.status.entity.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StatusRepository extends JpaRepository<Status, Long> {

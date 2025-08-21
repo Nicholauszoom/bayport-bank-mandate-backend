@@ -1,6 +1,6 @@
 package com.example.Project.Management.bayport.product.service;
 
-import com.dflex.emkopo.app.product.entity.ProductCondition;
+import com.example.Project.Management.bayport.product.entity.ProductCondition;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,13 +13,13 @@ import java.util.Optional;
 
 public interface ProductConditionService {
 	
-	public Optional<ProductCondition> findById(Long id);
+	 Optional<ProductCondition> findById(Long id);
 	
-	public ProductCondition saveProductCondition(ProductCondition productCondition);
+	 ProductCondition saveProductCondition(ProductCondition productCondition);
 	
-	public List<ProductCondition> saveProductConditionList(List<ProductCondition> productConditionList);
+	 List<ProductCondition> saveProductConditionList(List<ProductCondition> productConditionList);
 	
-	public ProductCondition findByConditionNumber(String conditionNumber);
+	 ProductCondition findByConditionNumber(String conditionNumber);
 
-	public List<ProductCondition> findByProductIdAndRecordStatusId(Long productId,Long recordStatusId);
+	 List<ProductCondition> findByProductIdAndRecordStatusId(Long productId,Long recordStatusId);
 }

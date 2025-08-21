@@ -1,19 +1,18 @@
-package com.dflex.emkopo.app.borrower.service;
+package com.example.Project.Management.bayport.borrower.service;
 
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
-import com.dflex.emkopo.app.borrower.dto.AccountValidation.AccountValidationApiReqDto;
-import com.dflex.emkopo.app.borrower.dto.AccountValidationResp.AccountValidationApiRespDataDto;
-import com.dflex.emkopo.app.borrower.dto.AccountValidationResp.AccountValidationApiRespDetailDto;
-import com.dflex.emkopo.app.borrower.dto.AccountValidationResp.AccountValidationApiRespDto;
-import com.dflex.emkopo.app.borrower.entity.Borrower;
-import com.dflex.emkopo.app.borrower.repository.BorrowerRepository;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
-import com.dflex.emkopo.app.search.SearchBorrower;
-import com.dflex.emkopo.commons.utils.Constants;
-import com.dflex.emkopo.commons.utils.DigitalSignature;
-import com.dflex.emkopo.commons.utils.ResponseCodes;
-import com.dflex.emkopo.commons.utils.Utils;
-import com.dflex.emkopo.app.fsp.repositories.FinancialServiceProviderRepository;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
+import com.example.Project.Management.bayport.borrower.dto.AccountValidation.AccountValidationApiReqDto;
+import com.example.Project.Management.bayport.borrower.dto.AccountValidationResp.AccountValidationApiRespDataDto;
+import com.example.Project.Management.bayport.borrower.dto.AccountValidationResp.AccountValidationApiRespDetailDto;
+import com.example.Project.Management.bayport.borrower.dto.AccountValidationResp.AccountValidationApiRespDto;
+import com.example.Project.Management.bayport.borrower.entity.Borrower;
+import com.example.Project.Management.bayport.borrower.repository.BorrowerRepository;
+import com.example.Project.Management.bayport.common.Constants;
+import com.example.Project.Management.bayport.common.DigitalSignature;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
+import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderRepository;
+import com.example.Project.Management.bayport.util.ResponseCodes;
+import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Unmarshaller;
 import org.apache.logging.log4j.LogManager;
@@ -94,7 +93,7 @@ public class BorrowerServiceImpl implements BorrowerService{
             Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
             if (fspByCode.isEmpty()) {
                 valid = false;
-                return createResponseEntity(valid,ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER, fspCode, mssId);
+                return createResponseEntity(valid, ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER, fspCode, mssId);
             }
 
             if (borrowerRepository.findByBankAccountNumber(accountValidationApiReqDto.getAccountValidationApiReqDataDto().getAccountValidationApiReqDetailDto().getAccountNumber()) == null) {
@@ -204,17 +203,6 @@ public class BorrowerServiceImpl implements BorrowerService{
     @Override
     public List<Borrower> findByFspCode(String fspCode) {
         return borrowerRepository.findByFspCode(fspCode);
-    }
-
-    @Override
-    public List<Borrower> getSearch(SearchBorrower filter) {
-        return borrowerRepository.findBorrowersByFilter(
-                filter.getFirstName(),
-                filter.getMiddleName(),
-                filter.getLastName(),
-                filter.getNIN(),
-                filter.getBankAccountNumber()
-        );
     }
 
     private String getStringValueFromCell(Cell cell) {

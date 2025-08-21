@@ -1,4 +1,4 @@
-package com.dflex.emkopo.api.dto.accountValidationResponse;
+package com.example.Project.Management.bayport.apis.dto.accountValidationResponse;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

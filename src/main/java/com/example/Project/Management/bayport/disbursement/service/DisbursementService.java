@@ -1,18 +1,19 @@
-package com.dflex.emkopo.app.disbursement.service;
+package com.example.Project.Management.bayport.disbursement.service;
 
+import com.example.Project.Management.bayport.disbursement.dto.portal.DisbursementDto;
 import org.springframework.http.ResponseEntity;
 
 public interface DisbursementService {
 
 
-     ResponseEntity<String> saveLoanDisbursement(String message) throws Exception;
+     ResponseEntity<?> saveLoanDisbursement(DisbursementDto disbursementDto) throws Exception;
 
-    ResponseEntity<String> saveLoanDisbursementFailure(String message) throws Exception;
+    ResponseEntity<?> saveLoanDisbursementFailure(DisbursementDto disbursementDto) throws Exception;
 
     //BAYPORT DISBURSEMENT
     ResponseEntity<String> saveBayportLoanDisbursement(String message) throws Exception;
 
     ResponseEntity<String> saveBayportLoanDisbursementFailure(String message) throws Exception;
 
-    ResponseEntity<String> takeOverLoanDisbursement(String message) throws Exception;
+    ResponseEntity<?> takeOverLoanDisbursement(DisbursementDto disbursementDto) throws Exception;
 }

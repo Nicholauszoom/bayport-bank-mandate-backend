@@ -1,8 +1,7 @@
-package com.dflex.emkopo.commons.utils;
+package com.example.Project.Management.bayport.common;
 
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.stereotype.Component;
 

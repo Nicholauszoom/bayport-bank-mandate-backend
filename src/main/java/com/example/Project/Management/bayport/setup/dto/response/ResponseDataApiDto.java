@@ -1,6 +1,6 @@
-package com.dflex.emkopo.app.setup.dto.response;
+package com.example.Project.Management.bayport.setup.dto.response;
 
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

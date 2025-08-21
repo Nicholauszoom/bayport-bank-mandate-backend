@@ -1,9 +1,7 @@
-package com.dflex.emkopo.app.setup.controller;
+package com.example.Project.Management.bayport.setup.controller;
 
-import com.dflex.emkopo.app.product.entity.Product;
-import com.dflex.emkopo.app.setup.entity.Currency;
-import com.dflex.emkopo.app.setup.repository.CurrencyRepository;
-import com.dflex.emkopo.app.setup.service.CurrencyService;
+import com.example.Project.Management.bayport.setup.entity.Currency;
+import com.example.Project.Management.bayport.setup.service.CurrencyService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

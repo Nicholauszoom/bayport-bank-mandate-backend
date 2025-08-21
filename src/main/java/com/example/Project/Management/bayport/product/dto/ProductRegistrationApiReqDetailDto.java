@@ -71,7 +71,6 @@ public class ProductRegistrationApiReqDetailDto {
 	@XmlElement(name = "InsuranceType")
 	private String insuranceType;
 
-
 	@XmlElement(name = "TermsCondition")
 	private List<ProductConditionApiReqDetailDto> productConditionList;
 

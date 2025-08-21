@@ -1,4 +1,4 @@
-package com.dflex.emkopo.commons.models;
+package com.example.Project.Management.bayport.common.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

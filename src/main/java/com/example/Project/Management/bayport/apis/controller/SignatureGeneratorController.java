@@ -1,9 +1,9 @@
-package com.dflex.emkopo.api.controller;
+package com.example.Project.Management.bayport.apis.controller;
 
-import com.dflex.emkopo.api.dto.GenericApiReqDataDtoWrapper;
-import com.dflex.emkopo.app.borrower.service.BorrowerService;
-import com.dflex.emkopo.app.loan.service.LoanService;
-import com.dflex.emkopo.app.product.service.ProductService;
+import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.borrower.service.BorrowerService;
+import com.example.Project.Management.bayport.loan.service.LoanService;
+import com.example.Project.Management.bayport.product.service.ProductService;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Unmarshaller;
 import org.springframework.beans.factory.annotation.Autowired;

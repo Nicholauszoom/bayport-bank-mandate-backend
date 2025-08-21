@@ -1,11 +1,9 @@
 package com.example.Project.Management.bayport.util;
 
-import java.util.UUID;
-
 import org.springframework.stereotype.Component;
 
 @Component
-public class Constants {
+public class Constant {
 
     //Connection Times
     public final static Long CONNECT_TIMEOUT = 10000L;

@@ -1,30 +1,12 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
+
+import com.example.Project.Management.bayport.common.entity.CommonEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import com.dflex.emkopo.commons.utils.CommonEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Augustino Mwageni
@@ -40,7 +22,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_communication_api", uniqueConstraints= {@UniqueConstraint(columnNames={"api_category_id", "client_system_id"})})
-public class CommunicationApi extends CommonEntity implements Serializable {
+public class CommunicationApi implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -49,16 +31,6 @@ public class CommunicationApi extends CommonEntity implements Serializable {
 	@SequenceGenerator(name="communication_api_id_generator", sequenceName="seq_communication_api", initialValue=1, allocationSize = 1)
 	@Column(name="id", unique=true, nullable=false, precision=11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="communication_api_uid",nullable = false)
-	private UUID communicationApiUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setCommunicationApiUid(java.util.UUID.randomUUID());
-    }
 
 	@Column(name="api_description", length=250, nullable=false)
 	private String apiDescription;

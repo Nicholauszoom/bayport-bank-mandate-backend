@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.borrower.dto.AccountValidationResp;
+package com.example.Project.Management.bayport.borrower.dto.AccountValidationResp;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

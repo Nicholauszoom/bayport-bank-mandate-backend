@@ -1,15 +1,13 @@
-package com.dflex.emkopo.app.setup.repository;
+package com.example.Project.Management.bayport.setup.repository;
 
-import java.util.List;
-
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.dflex.emkopo.app.setup.dto.CommunicationApiDetailsDto;
-
+import com.example.Project.Management.bayport.setup.dto.CommunicationApiDetailsDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * @author Augustino Mwageni
@@ -25,7 +23,7 @@ public class CommunicationApiRepositoryImpl implements CommunicationApiRepositor
 
 	@Override
 	public CommunicationApiDetailsDto findByClientIdClientKeyAndApiCategoryIdAndApiVersionNumber(String clientCode,
-			String clientKey, Long apiCategoryId, Long apiVersionNumber) {
+																								 String clientKey, Long apiCategoryId, Long apiVersionNumber) {
 		
 		CommunicationApiDetailsDto communicationApi = null;
 		

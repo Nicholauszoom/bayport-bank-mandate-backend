@@ -1,7 +1,7 @@
-package com.dflex.emkopo.app.balance.takeover.service;
+package com.example.Project.Management.bayport.takeover.service;
 
-import com.dflex.emkopo.app.balance.takeover.entity.Takeoverbal;
-import com.dflex.emkopo.app.balance.takeover.repository.TakeoverBalanceRepository;
+import com.example.Project.Management.bayport.takeover.entity.Takeoverbal;
+import com.example.Project.Management.bayport.takeover.repository.TakeoverBalanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

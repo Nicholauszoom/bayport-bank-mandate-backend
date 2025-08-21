@@ -1,10 +1,11 @@
-package com.dflex.emkopo.app.fsp.repositories;
+package com.example.Project.Management.bayport.fsp.repositories;
+
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 public interface FinancialServiceProviderRepository extends JpaRepository<FinancialServiceProvider, Long> {
 	
@@ -17,7 +18,4 @@ public interface FinancialServiceProviderRepository extends JpaRepository<Financ
 
     FinancialServiceProvider findFspByFspReferenceNumber(String fspReferenceNumber);
 
-//    FinancialServiceProvider getFirst();
-//	@Query(nativeQuery = true, value = "SELECT COUNT(*) FROM tab_fsp")
-//	int count();
 }

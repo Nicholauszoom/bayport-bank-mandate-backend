@@ -1,4 +1,4 @@
-package com.dflex.emkopo.commons.models;
+package com.example.Project.Management.bayport.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;

@@ -1,7 +1,6 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
 
-import com.dflex.emkopo.app.setup.entity.FSPDflexResponse;
-import com.dflex.emkopo.app.setup.entity.UtumishiResponse;
+import com.example.Project.Management.bayport.setup.entity.FSPDflexResponse;
 
 public interface FSPDflexResponseService {
     FSPDflexResponse saveFSPDflexResponse(FSPDflexResponse fspDflexResponse);

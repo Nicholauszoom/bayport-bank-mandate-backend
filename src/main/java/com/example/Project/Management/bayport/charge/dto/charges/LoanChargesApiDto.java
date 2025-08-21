@@ -1,4 +1,4 @@
-package com.example.Project.Management.bayport.loan.dto.charges;
+package com.example.Project.Management.bayport.charge.dto.charges;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,7 +21,6 @@ public class District {
     @SequenceGenerator(name = "district_id_generator", sequenceName = "seq_district", initialValue = 1, allocationSize = 1)
     @Column(name = "id", nullable = false, precision = 11)
     private Long id;
-
 
     @Column(name = "district_code", length = 50, nullable = false)
     private String districtCode;

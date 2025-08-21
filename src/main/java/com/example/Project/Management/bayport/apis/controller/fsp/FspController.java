@@ -1,37 +1,32 @@
-package com.dflex.emkopo.api.controller.fsp;
+package com.example.Project.Management.bayport.apis.controller.fsp;
 
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDto;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDtoWrapper;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDataDto;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDetailDto;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDto;
-import com.dflex.emkopo.app.disbursement.service.DisbursementService;
-import com.dflex.emkopo.app.loan.service.LoanService;
-import com.dflex.emkopo.app.product.dto.bayport.BayPortProductApiReqDetailDto;
-import com.dflex.emkopo.app.product.dto.bayport.BayportProductApiReqDataDto;
-import com.dflex.emkopo.app.product.dto.bayport.BayportproductApiReqDto;
-import com.dflex.emkopo.app.product.dto.decommission.ProductDecommisionApiReqDataDto;
-import com.dflex.emkopo.app.product.dto.decommission.ProductDecommissionApiReqDto;
-import com.dflex.emkopo.app.product.dto.decommission.ProductDecommissionsApiReqDetailDto;
-import com.dflex.emkopo.app.product.service.ProductDecommissionService;
-import com.dflex.emkopo.app.product.service.ProductService;
-import com.dflex.emkopo.app.product.service.ProductServiceImpl;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDataDto;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDetailDto;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDto;
+import com.example.Project.Management.bayport.disbursement.service.DisbursementService;
+import com.example.Project.Management.bayport.loan.service.LoanService;
+import com.example.Project.Management.bayport.product.dto.bayport.BayPortProductApiReqDetailDto;
+import com.example.Project.Management.bayport.product.dto.bayport.BayportProductApiReqDataDto;
+import com.example.Project.Management.bayport.product.dto.bayport.BayportproductApiReqDto;
+import com.example.Project.Management.bayport.product.dto.decommission.ProductDecommisionApiReqDataDto;
+import com.example.Project.Management.bayport.product.dto.decommission.ProductDecommissionApiReqDto;
+import com.example.Project.Management.bayport.product.dto.decommission.ProductDecommissionsApiReqDetailDto;
+import com.example.Project.Management.bayport.product.service.ProductDecommissionService;
+import com.example.Project.Management.bayport.product.service.ProductService;
+import com.example.Project.Management.bayport.product.service.ProductServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
-import jakarta.xml.bind.Unmarshaller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static com.dflex.emkopo.commons.utils.Constants.*;
 
 @RestController
 @RequestMapping("/api/fsp/bayport/")
@@ -100,7 +95,9 @@ public class FspController {
 
                 logger.info("successful pass into product service i.e with fsp code: " + fspCode);
 
-                return productService.registerProductFromBayPort(xmlPayload);
+//                return productService.registerProductFromBayPort(xmlPayload);
+
+                return null;
 
             case "PRODUCT_DECOMMISSION":
                 ProductDecommisionApiReqDataDto decommissionData = new ProductDecommisionApiReqDataDto();
@@ -128,7 +125,8 @@ public class FspController {
                 marshallerDecommission.marshal(decommissionDto, stringWriterDecommission);
                 String xmlPayloadDecommission = stringWriterDecommission.toString();
 
-                return productDecommissionService.productDecommission(xmlPayloadDecommission);
+//                return productDecommissionService.productDecommission(xmlPayloadDecommission);
+                return null;
 
             case "LOAN_DISBURSEMENT_NOTIFICATION":
                 LoanDisburseNotApiDataDto disbursementData = new LoanDisburseNotApiDataDto();

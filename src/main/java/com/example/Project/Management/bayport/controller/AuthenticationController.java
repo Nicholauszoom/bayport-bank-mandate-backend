@@ -4,6 +4,8 @@ import com.example.Project.Management.bayport.auth.dto.LoginUserDto;
 import com.example.Project.Management.bayport.auth.dto.RegisterUserDto;
 import com.example.Project.Management.bayport.auth.dto.VerifyUserDto;
 import com.example.Project.Management.bayport.auth.user.entity.User;
+import com.example.Project.Management.bayport.auth.user.repository.UserRepository;
+import com.example.Project.Management.bayport.auth.user.service.UserService;
 import com.example.Project.Management.bayport.service.AuthenticationService;
 import com.example.Project.Management.bayport.service.JwtService;
 import com.example.Project.Management.bayport.util.LoginResponse;
@@ -11,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RestController
 @Slf4j
 public class AuthenticationController {
@@ -19,9 +21,12 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService) {
+    private final UserService userService;
+
+    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService, UserService userService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
+        this.userService = userService;
     }
 
     @PostMapping("/signup")

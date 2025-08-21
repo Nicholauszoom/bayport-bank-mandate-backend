@@ -1,6 +1,6 @@
-package com.dflex.emkopo.app.status.entity;
+package com.example.Project.Management.bayport.status.entity;
 
-import com.dflex.emkopo.app.loan.entity.Loan;
+import com.example.Project.Management.bayport.loan.entity.Loan;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,22 +25,9 @@ public class Status {
     @Column(name = "id", nullable = false, precision = 11)
     private Long id;
 
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name="status_uid",nullable = false)
-    private UUID statusUid;
-
-    @PrePersist
-    protected void onCreate() {
-        setStatusUid(java.util.UUID.randomUUID());
-    }
-
     @Column(name = "status_name", length = 10, nullable = true)
     private String name;
 
     @Column(name = "status_description", length = 10, nullable = true)
     private String description;
-
-    @OneToMany(mappedBy = "status")
-    private List<Loan> loans;
 }

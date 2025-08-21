@@ -1,14 +1,13 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.example.Project.Management.bayport.setup.dto.CommunicationApiDetailsDto;
+import com.example.Project.Management.bayport.setup.entity.CommunicationApi;
+import com.example.Project.Management.bayport.setup.repository.CommunicationApiRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.dflex.emkopo.app.setup.dto.CommunicationApiDetailsDto;
-import com.dflex.emkopo.app.setup.entity.CommunicationApi;
-import com.dflex.emkopo.app.setup.repository.CommunicationApiRepository;
+import java.util.List;
+import java.util.Optional;
 
 
 
@@ -22,7 +21,7 @@ import com.dflex.emkopo.app.setup.repository.CommunicationApiRepository;
 public class CommunicationApiServiceImpl implements CommunicationApiService {
 
 	@Autowired
-	private CommunicationApiRepository  communicationApiRepository;
+	private CommunicationApiRepository communicationApiRepository;
 
 	@Override
 	public Optional<CommunicationApi> findById(Long id) {
@@ -41,7 +40,7 @@ public class CommunicationApiServiceImpl implements CommunicationApiService {
 
 	@Override
 	public CommunicationApiDetailsDto findByClientIdClientKeyAndApiCategoryIdAndApiVersionNumber(String clientCode, String clientKey,
-			Long apiCategoryId, Long apiVersionNumber) {
+																								 Long apiCategoryId, Long apiVersionNumber) {
 		return communicationApiRepository.findByClientIdClientKeyAndApiCategoryIdAndApiVersionNumber(clientCode,clientKey,
 				apiCategoryId,apiVersionNumber);
 	}

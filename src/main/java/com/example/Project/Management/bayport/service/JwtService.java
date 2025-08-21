@@ -99,7 +99,7 @@ public boolean isTokenValid(String token, String username) {
         Claims claims = extractAllClaims(token);
         return claims.getSubject().equals(username) && !claims.getExpiration().before(new Date());
     } catch (Exception e) {
-        log.error("Token validation failed: {}", e.getMessage());
+        log.info("Token validation failed: {}", e.getMessage());
         return false;
     }
 }

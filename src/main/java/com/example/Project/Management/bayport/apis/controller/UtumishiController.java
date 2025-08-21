@@ -1,19 +1,15 @@
-package com.dflex.emkopo.api.controller;
+package com.example.Project.Management.bayport.apis.controller;
 
-import com.dflex.emkopo.api.consumer.ProductRegistrationApiConsumer;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDto;
-import com.dflex.emkopo.api.dto.GenericApiReqDataDtoWrapper;
-import com.dflex.emkopo.app.borrower.service.BorrowerService;
-import com.dflex.emkopo.app.ess_accounts.service.AccountsService;
-import com.dflex.emkopo.app.loan.dto.registration.LoanRegistrationApiReqDto;
-import com.dflex.emkopo.app.loan.service.LoanService;
-import com.dflex.emkopo.app.product.service.ProductDecommissionService;
-import com.dflex.emkopo.app.product.service.ProductService;
-import com.dflex.emkopo.app.setup.service.UtumishiResponseService;
-import com.dflex.emkopo.commons.utils.DigitalSignature;
-import com.dflex.emkopo.commons.utils.ResponseCodes;
-import com.dflex.emkopo.commons.utils.Utils;
-import com.dflex.emkopo.disbursement.service.DisbursementService;
+import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.charge.service.ChargeService;
+import com.example.Project.Management.bayport.common.DigitalSignature;
+import com.example.Project.Management.bayport.disbursement.service.DisbursementService;
+import com.example.Project.Management.bayport.loan.service.LoanService;
+import com.example.Project.Management.bayport.product.service.ProductDecommissionService;
+import com.example.Project.Management.bayport.product.service.ProductService;
+import com.example.Project.Management.bayport.setup.service.UtumishiResponseService;
+import com.example.Project.Management.bayport.util.ResponseCodes;
+import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
@@ -21,19 +17,19 @@ import jakarta.xml.bind.Unmarshaller;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.amqp.core.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.io.StringReader;
 
-import static com.dflex.emkopo.commons.utils.Constants.*;
+import java.io.StringReader;
 import java.io.StringWriter;
+
+import static com.example.Project.Management.bayport.util.Constant.UTUMISHI_RESPONSE;
+
 
 @RestController
 @RequestMapping("/api/loans/")
@@ -45,14 +41,13 @@ public class UtumishiController {
     @Autowired
     LoanService loanService;
 
+    private final ChargeService chargeService;
+
     @Autowired
     ProductService productService;
 
     @Autowired
-    AccountsService accountsService;
-
-    @Autowired
-   ProductDecommissionService productDecommissionService;
+    ProductDecommissionService productDecommissionService;
 
     DisbursementService disbursementService;
 
@@ -76,8 +71,9 @@ public class UtumishiController {
     private DigitalSignature digitalSignature; // Inject DigitalSignature bean
 
 
-    public UtumishiController(LoanService loanService, ProductService productService,  ProductDecommissionService productDecommissionService, DigitalSignature digitalSignature, UtumishiResponseService utumishiResponseService) {
+    public UtumishiController(LoanService loanService, ChargeService chargeService, ProductService productService, ProductDecommissionService productDecommissionService, DigitalSignature digitalSignature, UtumishiResponseService utumishiResponseService) {
         this.loanService = loanService;
+        this.chargeService = chargeService;
         this.productService = productService;
         this.productDecommissionService = productDecommissionService;
         this.digitalSignature = digitalSignature;
@@ -108,29 +104,14 @@ public class UtumishiController {
         String messageType = genericApiReqDataDtoWrapper.getRequestData().getRequestHeader().getMessageType();
 
         switch (messageType) {
-            case "PRODUCT_DETAIL":
-                return productService.saveProduct(message);
-
-            case "PRODUCT_DECOMMISSION":
-                return productDecommissionService.productDecommission(message);
-
             case "LOAN_CHARGES_REQUEST":
-               return loanService.calculateLoanCharges(message);
-
-            case "PAY_0FF_BALANCE_REQUEST":
-                return loanService.loanPayOffReq(message);
+               return chargeService.calculateLoanCharges(message);
 
             case "TOP_UP_PAY_0FF_BALANCE_REQUEST":
                 return loanService.loanTopUpPayOffBalance(message);
 
-            case "FULL_REPAYMENT_0FF_BALANCE_REQUEST":
-                return loanService.fullPaymentPayOffReq(message);
-
             case "LOAN_CANCELLATION_NOTIFICATION":
                 return loanService.loanCancellation(message);
-
-            case "ACCOUNT_VALIDATION":
-                return accountsService.accountValidation(message);
 
             case "LOAN_OFFER_REQUEST":
                 return loanService.loanRegistration(message);
@@ -139,19 +120,10 @@ public class UtumishiController {
                 return loanService.loanRegistration(message);
 
             case "TAKEOVER_EMPLOYEE_DETAILS_TO_FSP":
-                return loanService.loanTakeOver(message);
+                return null;
 
             case "LOAN_FINAL_APPROVAL_NOTIFICATION":
                 return loanService.loanFinalApprovalNotification(message);
-
-            case "LOAN_DISBURSEMENT_NOTIFICATION":
-                return disbursementService.saveLoanDisbursement(message);
-
-            case "LOAN_DISBURSEMENT_FAILURE_NOTIFICATION":
-                return disbursementService.saveLoanDisbursementFailure(message);
-
-            case "RESPONSE":
-                return utumishiResponseService.saveUtumishiResponse(message);
 
             case "TAKEOVER_PAY_OFF_BALANCE_REQUEST":
                 return loanService.loanTakeOverBalance(message);

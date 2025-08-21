@@ -36,8 +36,6 @@ public class FSPCategoryServiceImpl implements FSPCategoryService {
 		FinancialServiceProviderCategory fspCategory = new FinancialServiceProviderCategory();
 		fspCategory.setCategoryCode(fspCategoryForm.getCode());
 		fspCategory.setCategoryName(fspCategoryForm.getName());
-		fspCategory.setCreatedByUsername(username);
-
 		fspCategoryRepository.save(fspCategory);
 		return fspCategory;
 	}

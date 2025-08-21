@@ -1,5 +1,6 @@
 package com.example.Project.Management.bayport.auth.dto;
 
+import com.example.Project.Management.bayport.auth.enumerated.Role;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +11,15 @@ public class RegisterUserDto {
     private String email;
     private String password;
     private String username;
+    private Role role;
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
     public String getEmail() {
         return email;

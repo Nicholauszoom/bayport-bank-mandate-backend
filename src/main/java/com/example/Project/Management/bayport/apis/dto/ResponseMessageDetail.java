@@ -1,4 +1,4 @@
-package com.dflex.emkopo.api.dto;
+package com.example.Project.Management.bayport.apis.dto;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

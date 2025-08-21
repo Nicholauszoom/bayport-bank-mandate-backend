@@ -1,6 +1,7 @@
-package com.dflex.emkopo.app.balance.takeover.service;
+package com.example.Project.Management.bayport.takeover.service;
 
-import com.dflex.emkopo.app.balance.takeover.entity.Takeoverbal;
+
+import com.example.Project.Management.bayport.takeover.entity.Takeoverbal;
 
 public interface TakeoverBalanceService {
 

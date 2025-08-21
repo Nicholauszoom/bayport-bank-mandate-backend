@@ -1,15 +1,11 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
 
-
-import com.dflex.emkopo.app.loan.dto.registration.LoanRegistrationApiReqDto;
-import com.dflex.emkopo.app.loan.service.LoanServiceImpl;
-import com.dflex.emkopo.app.setup.dto.response.ResponseApiDto;
-import com.dflex.emkopo.app.setup.dto.response.portal.ResponseApiWrapperDto;
-import com.dflex.emkopo.app.setup.entity.UtumishiResponse;
-import com.dflex.emkopo.app.setup.repository.UtumishiResponseRepository;
-import com.dflex.emkopo.commons.utils.RabbitMqParameters;
-import com.dflex.emkopo.commons.utils.ResponseCodes;
-import com.dflex.emkopo.commons.utils.Utils;
+import com.example.Project.Management.bayport.loan.service.LoanServiceImpl;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseApiDto;
+import com.example.Project.Management.bayport.setup.dto.response.portal.ResponseApiWrapperDto;
+import com.example.Project.Management.bayport.setup.entity.UtumishiResponse;
+import com.example.Project.Management.bayport.setup.repository.UtumishiResponseRepository;
+import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Unmarshaller;
 import org.apache.logging.log4j.LogManager;
@@ -30,15 +26,11 @@ public class UtumishiResponseServiceImpl implements UtumishiResponseService{
     private UtumishiResponseRepository utumishiResponseRepository;
 
     @Autowired
-    private RabbitMqParameters rabbitMqParameters;
-
-    @Autowired
     private Utils utils;
 
     @Autowired
-    public UtumishiResponseServiceImpl(UtumishiResponseRepository utumishiResponseRepository, RabbitMqParameters rabbitMqParameters, Utils util) {
+    public UtumishiResponseServiceImpl(UtumishiResponseRepository utumishiResponseRepository, Utils util) {
         this.utumishiResponseRepository = utumishiResponseRepository;
-        this.rabbitMqParameters = rabbitMqParameters;
         this.utils = util;
     }
 
@@ -72,10 +64,10 @@ public class UtumishiResponseServiceImpl implements UtumishiResponseService{
             responseApiWrapperDto.setResponseCode(responseApiDto.getResponseDataDto().getResponseDetailDto().getResponseCode());
             responseApiWrapperDto.setDescription(responseApiDto.getResponseDataDto().getResponseDetailDto().getDescription());
 
-            utils.publishMsgToExchange(
-                    rabbitMqParameters.getExchange(),
-                    rabbitMqParameters.getProductUtumishiRoutingKey(),
-                    responseApiWrapperDto, new HashMap<>());
+//            utils.publishMsgToExchange(
+//                    rabbitMqParameters.getExchange(),
+//                    rabbitMqParameters.getProductUtumishiRoutingKey(),
+//                    responseApiWrapperDto, new HashMap<>());
 
             logger.info("utumishi resposne success saved");
 

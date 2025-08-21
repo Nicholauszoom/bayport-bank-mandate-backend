@@ -1,19 +1,12 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
+
+import com.example.Project.Management.bayport.common.entity.CommonEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import com.dflex.emkopo.commons.utils.CommonEntity;
-
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Augustino Mwageni
@@ -29,7 +22,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_api_category")
-public class ApiCategory extends CommonEntity implements Serializable {
+public class ApiCategory implements Serializable {
 
 	private static final long serialVersionUID = -80992527267230465L;
 
@@ -38,16 +31,6 @@ public class ApiCategory extends CommonEntity implements Serializable {
 	@SequenceGenerator(name="api_category_id_generator", sequenceName="seq_api_category", initialValue=1, allocationSize = 1)
 	@Column(name="id", unique=true, nullable=false, precision=11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="api_category_uid",nullable = false)
-	private UUID apiCategoryUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setApiCategoryUid(java.util.UUID.randomUUID());
-    }
 
 	@Column(name="api_category_description", nullable=false, length=250)
 	private String apiCategoryDescription;

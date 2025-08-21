@@ -10,9 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-
-
 
 @Entity
 @Table(name = "users")
@@ -47,15 +44,16 @@ public class User implements UserDetails {
 
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Role role=Role.USER;
+    private Role role;
 
 
     //constructor for creating an unverified user
-    public User(String username, String email, String password, String fullName) {
+    public User(String username, String email, String password, String fullName, Role role) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.fullName = fullName;
+        this.role = role;
     }
 
     public User() {

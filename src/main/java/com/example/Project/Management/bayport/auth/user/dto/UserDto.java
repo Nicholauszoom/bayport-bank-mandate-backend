@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -26,7 +25,7 @@ public class UserDto implements Serializable {
 
     private String fullName;
 
-    private String userName;
+    private String username;
 
 
 

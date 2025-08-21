@@ -1,7 +1,7 @@
-package com.dflex.emkopo.app.status.controller;
+package com.example.Project.Management.bayport.status.controller;
 
-import com.dflex.emkopo.app.status.entity.Status;
-import com.dflex.emkopo.app.status.service.StatusService;
+import com.example.Project.Management.bayport.status.entity.Status;
+import com.example.Project.Management.bayport.status.service.StatusService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -41,12 +41,6 @@ public class StatusController {
     public ResponseEntity<String> deleteStatus(@PathVariable Long id) {
         statusService.deleteStatus(id);
         return ResponseEntity.ok("Status deleted successfully");
-    }
-
-    @PostMapping("/{id}/update")
-    public ResponseEntity<String> updateStatus(@PathVariable Long id, @RequestBody Status updatedStatus) {
-        statusService.updateStatus(id, updatedStatus);
-        return ResponseEntity.ok("Status updated successfully");
     }
 
 }

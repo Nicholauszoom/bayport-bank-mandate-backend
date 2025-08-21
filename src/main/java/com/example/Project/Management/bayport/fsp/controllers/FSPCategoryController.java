@@ -25,17 +25,6 @@ public class FSPCategoryController {
         this.fspCategoryService = fspCategoryService;
     }
 
-    @PostMapping
-    public ResponseEntity<DataResponse<FinancialServiceProviderCategory>> create(
-            @Validated @RequestBody FspCategoryForm fspCategoryForm, HttpServletRequest request
-    ) throws URISyntaxException {
-        String path = request.getRequestURI();
-        FinancialServiceProviderCategory fspCategory = fspCategoryService.create(fspCategoryForm);
-        return ResponseEntity.created(new URI(path+"/"+fspCategory.getFspUid())).body(new DataResponse<>(
-                HttpStatus.CREATED, "Financial service provider category has been created.", path, fspCategory
-        ));
-    }
-
     @GetMapping
     public ResponseEntity<DataResponse<List<FinancialServiceProviderCategory>>> list(HttpServletRequest request){
 
@@ -61,15 +50,6 @@ public class FSPCategoryController {
         FinancialServiceProviderCategory fspCategory = fspCategoryService.update(categoryId, fspCategoryForm);
         return ResponseEntity.ok(new DataResponse<>(
                 HttpStatus.OK, "Financial Service Provider Category has been updated.", path, fspCategory
-        ));
-    }
-
-    @DeleteMapping("trash/{categoryId}")
-    public ResponseEntity<DataResponse<FinancialServiceProviderCategory>> trash(@PathVariable Long categoryId, HttpServletRequest request){
-        String path = request.getRequestURI();
-        FinancialServiceProviderCategory fspCategory = fspCategoryService.softDelete(categoryId);
-        return ResponseEntity.ok(new DataResponse<>(
-                HttpStatus.OK, "Financial Service Provider Category has been trashed.", path, fspCategory
         ));
     }
 

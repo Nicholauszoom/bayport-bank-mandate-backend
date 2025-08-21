@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    hikari.schema: public
+    url: jdbc:postgresql://localhost:5432/project_management_bayport?serverTimezone=UTC
+    username: postgres
+    password: SOMI
+  #Email service
+  mail:
+    host: smtp.gmail.com
+    username: nicholaussomi5
+    password: rjxfmhmlcwzrdmhi
+    properties:
+      mail:
+        transport.protocol: smtp
+        smtp:
+          port: 587
+          auth: true
+          starttls.enable: true
+          ssl.enable: true
+
+# KEY CONFIGS
+dflex:
+  key:
+    private: emkopo.pfx
+    public: dflexpublic.pfx
+    alias: dflex.co.tz
+    password: $flex4dm1n

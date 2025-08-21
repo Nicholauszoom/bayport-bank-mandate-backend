@@ -1,27 +1,13 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
+
+import com.example.Project.Management.bayport.common.entity.CommonEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import com.dflex.emkopo.commons.utils.CommonEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 /**
  * 
  * @author Augustino Mwageni
@@ -36,7 +22,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_api_version")
-public class ApiVersion extends CommonEntity implements Serializable {
+public class ApiVersion implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -45,16 +31,6 @@ public class ApiVersion extends CommonEntity implements Serializable {
 	@SequenceGenerator(name="api_version_id_generator", sequenceName="seq_api_version", initialValue=1, allocationSize = 1)
 	@Column(name="id", unique=true, nullable=false, precision=11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="api_version_uid",nullable = false)
-	private UUID apiVersionUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setApiVersionUid(java.util.UUID.randomUUID());
-    }
 
 	@Column(name="api_version_description", length=1000, nullable=false)
 	private String apiVersionDescription;

@@ -1,10 +1,7 @@
-package com.dflex.emkopo.app.setup.repository;
+package com.example.Project.Management.bayport.setup.repository;
 
+import com.example.Project.Management.bayport.setup.entity.Currency;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.dflex.emkopo.app.setup.entity.Currency;
-
-import java.util.Optional;
 
 public interface CurrencyRepository extends JpaRepository<Currency, Long> {
 

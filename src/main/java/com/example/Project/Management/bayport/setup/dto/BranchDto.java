@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.setup.dto;
+package com.example.Project.Management.bayport.setup.dto;
 
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;

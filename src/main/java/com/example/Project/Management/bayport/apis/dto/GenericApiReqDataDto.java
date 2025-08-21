@@ -1,7 +1,7 @@
-package com.dflex.emkopo.api.dto;
+package com.example.Project.Management.bayport.apis.dto;
 
 
-import com.dflex.emkopo.app.loan.dto.charges.LoanChargesApiRespDetailDto;
+import com.example.Project.Management.bayport.charge.dto.charges.LoanChargesApiRespDetailDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.xml.bind.annotation.*;
 import lombok.*;

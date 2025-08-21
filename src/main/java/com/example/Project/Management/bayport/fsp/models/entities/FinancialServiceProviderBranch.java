@@ -1,23 +1,22 @@
-package com.dflex.emkopo.app.fsp.models.entities;
+package com.example.Project.Management.bayport.fsp.models.entities;
 
-import com.dflex.emkopo.app.setup.entity.District;
-import com.dflex.emkopo.commons.utils.CommonEntity;
+import com.example.Project.Management.bayport.common.entity.CommonEntity;
+import com.example.Project.Management.bayport.setup.entity.District;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 
 
-
+@Getter
+@Setter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_fsp_branches")
-public class FinancialServiceProviderBranch extends CommonEntity implements Serializable {
+public class FinancialServiceProviderBranch implements Serializable {
 
 
     @Id

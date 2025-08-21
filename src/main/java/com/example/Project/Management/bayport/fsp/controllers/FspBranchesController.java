@@ -1,22 +1,18 @@
-package com.dflex.emkopo.app.fsp.controllers;
+package com.example.Project.Management.bayport.fsp.controllers;
 
-
-
-import com.dflex.emkopo.app.fsp.services.FinancialServiceProviderBranchService;
-import com.dflex.emkopo.commons.models.DataResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController("/fsp-branches")
 public class FspBranchesController {
 
-
-    private FinancialServiceProviderBranchService financialServiceProviderBranchService;
+    private com.example.Project.Management.bayport.fsp.services.FinancialServiceProviderBranchService financialServiceProviderBranchService;
 
     @Autowired
-    void setFinancialServiceProviderBranchService(FinancialServiceProviderBranchService financialServiceProviderBranchService){
+    void setFinancialServiceProviderBranchService(com.example.Project.Management.bayport.fsp.services.FinancialServiceProviderBranchService financialServiceProviderBranchService){
         this.financialServiceProviderBranchService = financialServiceProviderBranchService;
     }
 
@@ -26,8 +22,4 @@ public class FspBranchesController {
          return financialServiceProviderBranchService.getFspBranches(fspCode);
     }
 
-//    @PostMapping()
-//    public ResponseEntity<DataResponse<?>> create(@Validated @RequestBody ){
-//
-//    }
 }

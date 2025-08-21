@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

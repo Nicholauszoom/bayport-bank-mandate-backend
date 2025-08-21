@@ -1,10 +1,10 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
+
+import com.example.Project.Management.bayport.setup.dto.CommunicationApiDetailsDto;
+import com.example.Project.Management.bayport.setup.entity.CommunicationApi;
 
 import java.util.List;
 import java.util.Optional;
-
-import com.dflex.emkopo.app.setup.dto.CommunicationApiDetailsDto;
-import com.dflex.emkopo.app.setup.entity.CommunicationApi;
 
 
 /**
@@ -22,6 +22,6 @@ public interface CommunicationApiService {
 	public CommunicationApi saveCommunicationApi(CommunicationApi communicationApi);
 	
 	public CommunicationApiDetailsDto findByClientIdClientKeyAndApiCategoryIdAndApiVersionNumber(String clientCode, String clientKey,
-			Long apiCategoryId, Long apiVersionNumber);
+																								 Long apiCategoryId, Long apiVersionNumber);
 
 }

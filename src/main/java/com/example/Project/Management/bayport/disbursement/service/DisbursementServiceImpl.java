@@ -1,63 +1,49 @@
-package com.dflex.emkopo.app.disbursement.service;
+package com.example.Project.Management.bayport.disbursement.service;
 
-import com.dflex.emkopo.api.consumer.portal.dto.DisbursementPortalDto;
-import com.dflex.emkopo.api.consumer.portal.dto.LoanInitialApprovePortalDto;
-import com.dflex.emkopo.api.dto.ApiReqHeaderDto;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDataDto;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDetailDto;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.PaymentAdviceDto;
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
-import com.dflex.emkopo.app.fsp.repositories.FinancialServiceProviderRepository;
-import com.dflex.emkopo.app.fsp.services.FinancialServiceProviderService;
-import com.dflex.emkopo.app.loan.dto.approval.LoanApprovalApiDataDto;
-import com.dflex.emkopo.app.loan.dto.approval.LoanApprovalApiDetailDto;
-import com.dflex.emkopo.app.loan.service.LoanService;
-import com.dflex.emkopo.app.message_req_resp.loan.entity.LoanLogs;
-import com.dflex.emkopo.app.message_req_resp.loan.repository.LoanLogRepository;
-import com.dflex.emkopo.app.product.entity.Product;
-import com.dflex.emkopo.commons.utils.Constants;
-import com.dflex.emkopo.commons.utils.RabbitMqParameters;
-import com.dflex.emkopo.commons.utils.ResponseCodes;
-import com.dflex.emkopo.commons.utils.Utils;
-import com.dflex.emkopo.app.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDto;
-import com.dflex.emkopo.app.disbursement.entity.Disbursement;
-import com.dflex.emkopo.app.disbursement.repository.DisbursementRepository;
-import com.dflex.emkopo.app.loan.entity.Loan;
-import com.dflex.emkopo.app.loan.repository.LoanRepository;
+import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
+import com.example.Project.Management.bayport.common.Constants;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDataDto;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDetailDto;
+import com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement.LoanDisburseNotApiDto;
+import com.example.Project.Management.bayport.disbursement.dto.portal.DisbursementDto;
+import com.example.Project.Management.bayport.disbursement.entity.Disbursement;
+import com.example.Project.Management.bayport.disbursement.repository.DisbursementRepository;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
+import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderRepository;
+import com.example.Project.Management.bayport.fsp.services.FinancialServiceProviderService;
+import com.example.Project.Management.bayport.loan.entity.Loan;
+import com.example.Project.Management.bayport.loan.repository.LoanRepository;
+import com.example.Project.Management.bayport.loan.service.LoanService;
+import com.example.Project.Management.bayport.util.ResponseCodes;
+import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.text.StringEscapeUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 public class DisbursementServiceImpl implements DisbursementService {
 
@@ -75,30 +61,16 @@ public class DisbursementServiceImpl implements DisbursementService {
 
     @Autowired
     private Utils utils;
-
-    @Autowired
-    private LoanLogRepository loanLogRepository;
-
-    @Autowired
-    private RabbitMqParameters rabbitMqParameters;
-
-    private static final Logger logger = LogManager.getLogger(DisbursementServiceImpl.class);
-
-    public DisbursementServiceImpl(DisbursementRepository disbursementRepository, FinancialServiceProviderService financialServiceProviderService, FinancialServiceProviderRepository financialServiceProviderRepository, LoanService loanService, LoanLogRepository loanLogRepository) {
+    
+    public DisbursementServiceImpl(DisbursementRepository disbursementRepository, FinancialServiceProviderService financialServiceProviderService, FinancialServiceProviderRepository financialServiceProviderRepository, LoanService loanService) {
         this.disbursementRepository = disbursementRepository;
         this.financialServiceProviderRepository = financialServiceProviderRepository;
         this.loanService = loanService;
-        this.loanLogRepository = loanLogRepository;
     }
 
     //UTUMISHI DISBURSEMENT
     @Override
-    public ResponseEntity<String> saveLoanDisbursement(String message) throws Exception {
-        logger.info("Received loan disbursement request: {}", message);
-        JAXBContext jaxbContext = JAXBContext.newInstance(DisbursementPortalDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        DisbursementPortalDto disbursementPortalDto = (DisbursementPortalDto) unmarshaller.unmarshal(stringReader);
+    public ResponseEntity<?> saveLoanDisbursement(DisbursementDto disbursementDto) throws Exception {
         String mssId = generateMessageId();
         List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
         FinancialServiceProvider fsp = null;
@@ -109,19 +81,19 @@ public class DisbursementServiceImpl implements DisbursementService {
         try {
 
             LoanDisburseNotApiDetailDto loanDisburseNotApiDetailDto = new LoanDisburseNotApiDetailDto();
-            loanDisburseNotApiDetailDto.setApplicationNumber(disbursementPortalDto.getApplicationnumber());
-            loanDisburseNotApiDetailDto.setReason(disbursementPortalDto.getReason());
-            loanDisburseNotApiDetailDto.setFspReferenceNumber(disbursementPortalDto.getFspreferencenumber());
-            loanDisburseNotApiDetailDto.setLoanNumber(disbursementPortalDto.getLoannumber());
-            String totaltopay = disbursementPortalDto.getTotalamounttpay();
+            loanDisburseNotApiDetailDto.setApplicationNumber(disbursementDto.getApplicationNumber());
+            loanDisburseNotApiDetailDto.setReason(disbursementDto.getReason());
+            loanDisburseNotApiDetailDto.setFspReferenceNumber(disbursementDto.getFspReferenceNumber());
+            loanDisburseNotApiDetailDto.setLoanNumber(disbursementDto.getLoanNumber());
+            String totaltopay = String.valueOf(disbursementDto.getTotalAmountToPay());
             if (totaltopay != null) {
                 // Replace comma with a period
                 String totaltopays = totaltopay.replace(",", "");
                 loanDisburseNotApiDetailDto.setTotalAmountToPay(new BigDecimal(totaltopays).setScale(2, RoundingMode.HALF_UP));
             }
-            loanDisburseNotApiDetailDto.setDisbursementDate(disbursementPortalDto.getDisbursementdate());
+            loanDisburseNotApiDetailDto.setDisbursementDate(disbursementDto.getDisbursementDate());
 
-            logger.info("loan disbursement notification json in detail level payload: " + loanDisburseNotApiDetailDto);
+            log.info("loan disbursement notification json in detail level payload: {}" , loanDisburseNotApiDetailDto);
 
             ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
             apiReqHeaderDto.setFspCode(fsp.getFspCode());
@@ -133,7 +105,7 @@ public class DisbursementServiceImpl implements DisbursementService {
             LoanDisburseNotApiDataDto loanDisburseNotApiDataDto = new LoanDisburseNotApiDataDto();
             loanDisburseNotApiDataDto.setRequestHeader(apiReqHeaderDto);
             loanDisburseNotApiDataDto.setMessageLoanDisburseDetails(loanDisburseNotApiDetailDto);
-            logger.info("loan disbursement json in data level payload: " + loanDisburseNotApiDataDto);
+            log.info("loan disbursement json in data level payload: " + loanDisburseNotApiDataDto);
 
             JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanDisburseNotApiDataDto.class);
             Marshaller marshaller = jaxbContext2.createMarshaller();
@@ -141,43 +113,26 @@ public class DisbursementServiceImpl implements DisbursementService {
             StringWriter stringWriter = new StringWriter();
             marshaller.marshal(loanDisburseNotApiDataDto, stringWriter);
             String xmlPayload = stringWriter.toString();
-            System.out.println("disbursement xml payload: " + xmlPayload);
 
-            logger.info(" loan disbursement xml payload: " + xmlPayload);
+            log.info(" loan disbursement xml payload: {} ", xmlPayload);
 
             ResponseEntity<String> responseEntityDisburse = loanService.generateRequestSignature2(xmlPayload);
 
-            logger.info("loan disbursement sent to be signed" + xmlPayload);
+//            log.info("loan disbursement sent to be signed" + xmlPayload);
 
-//            LoanLogs loanLogs = loanLogRepository.findByApplicationNumber(disbursementPortalDto.getApplicationnumber());
-//            if(loanLogs != null){
-//                loanLogs.setLoanStatus("Loan Disbursed");
-//                loanLogs.setDisbursementDate(disbursementPortalDto.getDisbursementdate());
-//                loanLogRepository.save(loanLogs);
-//            }
-            utils.sendMessage(
-                    rabbitMqParameters.getExchange(),
-                    rabbitMqParameters.getApprovalAndDisbursRoutingKey(),
-                    String.valueOf(responseEntityDisburse));
+            log.info("utumishi response message for disbursement notification sent to the queue: {}", responseEntityDisburse);
 
-            logger.info("utumishi response message for disbursement notification sent to the queue: {}", responseEntityDisburse);
-
-            return responseEntityDisburse;
+            return ResponseEntity.status(HttpStatus.OK).body("SUCCESS");
 
         } catch (Exception e) {
-            logger.info("fail to send disbursement to utumishi ");
-            return null;
+            log.info("fail to send disbursement to utumishi");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL");
         }
     }
 
     @Override
-    public ResponseEntity<String> saveLoanDisbursementFailure(String message) throws Exception {
-        logger.info("Received loan disbursement failure request: {}", message);
-        JAXBContext jaxbContext = JAXBContext.newInstance(DisbursementPortalDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        DisbursementPortalDto disbursementPortalDto = (DisbursementPortalDto) unmarshaller.unmarshal(stringReader);
-        String mssId = generateMessageId();
+    public ResponseEntity<?> saveLoanDisbursementFailure(DisbursementDto disbursementDto) throws Exception {
+       String mssId = generateMessageId();
         List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
         FinancialServiceProvider fsp = null;
         if (!fspList.isEmpty()) {
@@ -186,10 +141,10 @@ public class DisbursementServiceImpl implements DisbursementService {
 
         try {
             LoanDisburseNotApiDetailDto loanDisburseNotApiDetailDto = new LoanDisburseNotApiDetailDto();
-            loanDisburseNotApiDetailDto.setApplicationNumber(disbursementPortalDto.getApplicationnumber());
-            loanDisburseNotApiDetailDto.setReason(disbursementPortalDto.getReason());
+            loanDisburseNotApiDetailDto.setApplicationNumber(disbursementDto.getApplicationNumber());
+            loanDisburseNotApiDetailDto.setReason(disbursementDto.getReason());
 
-            logger.info("loan disbursement failure notification json in detail level payload: " + loanDisburseNotApiDetailDto);
+            log.info("loan disbursement failure notification json in detail level payload: ", loanDisburseNotApiDetailDto);
 
             ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
             apiReqHeaderDto.setFspCode(fsp.getFspCode());
@@ -202,7 +157,7 @@ public class DisbursementServiceImpl implements DisbursementService {
             loanDisburseNotApiDataDto.setRequestHeader(apiReqHeaderDto);
             loanDisburseNotApiDataDto.setMessageLoanDisburseDetails(loanDisburseNotApiDetailDto);
 
-            logger.info("loan disbursement json in data level payload: " + loanDisburseNotApiDataDto);
+            log.info("loan disbursement json in data level payload: {}", loanDisburseNotApiDataDto);
 
             JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanDisburseNotApiDataDto.class);
             Marshaller marshaller = jaxbContext2.createMarshaller();
@@ -210,17 +165,16 @@ public class DisbursementServiceImpl implements DisbursementService {
             StringWriter stringWriter = new StringWriter();
             marshaller.marshal(loanDisburseNotApiDataDto, stringWriter);
             String xmlPayload = stringWriter.toString();
-            System.out.println("disbursement failure xml payload: " + xmlPayload);
 
-            logger.info(" loan disbursement failure xml payload: " + xmlPayload);
+            log.info(" loan disbursement failure xml payload: {}", xmlPayload);
 
             loanService.generateRequestSignature2(xmlPayload);
 
-            logger.info("loan disbursement failure sent tobe signed" + xmlPayload);
+            log.info("loan disbursement failure sent tobe signed" + xmlPayload);
             return null;
 
         } catch (Exception e) {
-            logger.info("fail to send disbursement failure to utumishi ");
+            log.info("fail to send disbursement failure to utumishi");
             return null;
         }
     }
@@ -228,7 +182,7 @@ public class DisbursementServiceImpl implements DisbursementService {
     //BAYPORT DISBURSEMENT
     @Override
     public ResponseEntity<String> saveBayportLoanDisbursement(String message) throws Exception {
-        logger.info("Received loan disbursement request: {}", message);
+        log.info("Received loan disbursement request: {}", message);
         JAXBContext jaxbContext = JAXBContext.newInstance(LoanDisburseNotApiDto.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         StringReader stringReader = new StringReader(message);
@@ -241,7 +195,7 @@ public class DisbursementServiceImpl implements DisbursementService {
 
             // Check for loan existence
             if (loan.isEmpty()) {
-                logger.info("loan application not match for any loan" + loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getApplicationNumber());
+                log.info("loan application not match for any loan" + loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getApplicationNumber());
                 return createJsonResponseEntity(ResponseCodes.INVALID_LOAN_CODE, fspCode, mssId);
             }
 
@@ -251,27 +205,26 @@ public class DisbursementServiceImpl implements DisbursementService {
             disbursement.setReason(loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getReason());
             disbursement.setLoan(loan.get());
             disbursement.setApplicationNumber(loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getApplicationNumber());
-//            disbursement.setDisbursementDate(loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getDisbursementDate());
             disbursement.setDisbursementAmount(loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getTotalAmountToPay());
             disbursement.setDisbursementStatus(Constants.SUCCESS_DISBURSMENT_ACTION);
             disbursementRepository.save(disbursement);
 
             //Update loan by loan id
-            loan.get().setLoanStatus(Constants.LOAN_DISBURSEMENT_ACTION);
+//            loan.get().setLoanStatus(Constants.LOAN_DISBURSEMENT_ACTION);
             loanRepository.save(loan.get());
 
-            logger.info("loan disbursement successfull i.e loan with Loan Number:" + loan.get().getLoanNumber());
+//            log.info("loan disbursement successfull i.e loan with Loan Number:" + loan.get().getLoanNumber());
             return createJsonResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
         } catch (Exception e) {
-            logger.info(e.getMessage());
-            logger.info("Exception occurred while processing loan disbursement {}");
+            log.info(e.getMessage());
+            log.info("Exception occurred while processing loan disbursement {}");
             return createJsonResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
         }
     }
 
     @Override
     public ResponseEntity<String> saveBayportLoanDisbursementFailure(String message) throws Exception {
-        logger.info("Received loan disbursement request: {}", message);
+        log.info("Received loan disbursement request: {}", message);
         JAXBContext jaxbContext = JAXBContext.newInstance(LoanDisburseNotApiDto.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         StringReader stringReader = new StringReader(message);
@@ -284,7 +237,7 @@ public class DisbursementServiceImpl implements DisbursementService {
 
             // Check for loan existence
             if (loan.isEmpty()) {
-                logger.info("loan application not match for any loan {}" + loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getApplicationNumber());
+                log.info("loan application not match for any loan {}" + loanDisburseNotApiDto.getLoanDisburseNotApiData().getMessageLoanDisburseDetails().getApplicationNumber());
                 return createJsonResponseEntity(ResponseCodes.INVALID_LOAN_CODE, fspCode, mssId);
             }
 
@@ -300,14 +253,14 @@ public class DisbursementServiceImpl implements DisbursementService {
             disbursementRepository.save(disbursement);
 
             //Update loan by loan id
-            loan.get().setLoanStatus(Constants.LOAN_DISBURSEMENT_FAILURE_NOTIFICATION);
+//            loan.get().setLoanStatus(Constants.LOAN_DISBURSEMENT_FAILURE_NOTIFICATION);
             loanRepository.save(loan.get());
 
-            logger.info("loan disbursement failure notification successfull i.e loan with Loan Number:" + loan.get().getLoanNumber());
+//            log.info("loan disbursement failure notification successfull i.e loan with Loan Number:" + loan.get().getLoanNumber());
             return createJsonResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
         } catch (Exception e) {
-            logger.info(e.getMessage());
-            logger.info("Exception occurred while processing loan disbursement {}");
+            log.info(e.getMessage());
+            log.info("Exception occurred while processing loan disbursement {}");
             return createJsonResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
         }
     }
@@ -319,7 +272,7 @@ public class DisbursementServiceImpl implements DisbursementService {
 
         ResponseEntity<String> responseEntityJson = utils.messageResponseWrapperToPayPort(responseCode, description, fspCode,
                 mssId, Constants.LOAN_DISBURSEMENT_DETAIL);
-        logger.info("Response for FSP Code {}: {}", fspCode, responseEntityJson.getBody());
+        log.info("Response for FSP Code {}: {}", fspCode, responseEntityJson.getBody());
 
         return responseEntityJson;
     }
@@ -329,7 +282,7 @@ public class DisbursementServiceImpl implements DisbursementService {
     private ResponseEntity<String> createResponseEntity(int responseCode, String fspCode, String mssId) throws Exception {
         String description = ResponseCodes.getDescription(responseCode);
         ResponseEntity<String> responseEntity = utils.messageResponseWrapperToUtumishi(responseCode, description, fspCode, mssId, Constants.UTUMISHI_RESPONSE);
-        logger.info("Response for FSP Code {}: {}", fspCode, responseEntity.getBody());
+        log.info("Response for FSP Code {}: {}", fspCode, responseEntity.getBody());
         return responseEntity;
     }
 
@@ -339,13 +292,8 @@ public class DisbursementServiceImpl implements DisbursementService {
 
     //TAKE OVER DISBURSEMENT NOTIFICATION
     @Override
-    public ResponseEntity<String> takeOverLoanDisbursement(String message) throws Exception {
-        logger.info("Received take over loan disbursement request: {}", message);
-        JAXBContext jaxbContext = JAXBContext.newInstance(DisbursementPortalDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        DisbursementPortalDto disbursementPortalDto = (DisbursementPortalDto) unmarshaller.unmarshal(stringReader);
-        String mssId = generateMessageId();
+    public ResponseEntity<?> takeOverLoanDisbursement(DisbursementDto disbursementDto) throws Exception {
+       String mssId = generateMessageId();
         List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
         FinancialServiceProvider fsp = null;
         if (!fspList.isEmpty()) {
@@ -353,29 +301,29 @@ public class DisbursementServiceImpl implements DisbursementService {
         }
 
             try {
-                logger.info("Unmarshed loan disbursement request: {}", disbursementPortalDto);
+                log.info("Unmarshed loan disbursement request: {}", disbursementDto);
 
                 LoanDisburseNotApiDetailDto loanDisburseNotApiDetailDto = new LoanDisburseNotApiDetailDto();
-                loanDisburseNotApiDetailDto.setApplicationNumber(disbursementPortalDto.getApplicationnumber());
-                loanDisburseNotApiDetailDto.setReason(disbursementPortalDto.getReason());
-                loanDisburseNotApiDetailDto.setFspReferenceNumber(disbursementPortalDto.getFspreferencenumber());
-                loanDisburseNotApiDetailDto.setLoanNumber(disbursementPortalDto.getLoannumber());
-                String totaltopay = disbursementPortalDto.getTotalamounttpay();
+                loanDisburseNotApiDetailDto.setApplicationNumber(disbursementDto.getApplicationNumber());
+                loanDisburseNotApiDetailDto.setReason(disbursementDto.getReason());
+                loanDisburseNotApiDetailDto.setFspReferenceNumber(disbursementDto.getFspReferenceNumber());
+                loanDisburseNotApiDetailDto.setLoanNumber(disbursementDto.getLoanNumber());
+                String totaltopay = String.valueOf(disbursementDto.getTotalAmountToPay());
                 if (totaltopay != null) {
                     // Replace comma with a period
                     String totaltopays = totaltopay.replace(",", ".");
                     loanDisburseNotApiDetailDto.setTotalAmountToPay(new BigDecimal(totaltopays).setScale(2, RoundingMode.HALF_UP));
                 }
 
-                loanDisburseNotApiDetailDto.setDisbursementDate(disbursementPortalDto.getDisbursementdate());
+                loanDisburseNotApiDetailDto.setDisbursementDate(disbursementDto.getDisbursementDate());
 
-                String cleanedPaymentAdvice = disbursementPortalDto.getPaymentAdvice().replaceAll("\\s+", "");
+                String cleanedPaymentAdvice = disbursementDto.getPaymentAdvice().replaceAll("\\s+", "");
 
                 loanDisburseNotApiDetailDto.setPaymentAdviceDto(cleanedPaymentAdvice);
 
-                loanDisburseNotApiDetailDto.setPaymentAdviceAttachment(disbursementPortalDto.getPaymentadviceattachment());
+                loanDisburseNotApiDetailDto.setPaymentAdviceAttachment(disbursementDto.getPaymentAdviceAttachment());
 
-                logger.info("take over disbursement notification json in detail level payload: " + loanDisburseNotApiDetailDto);
+                log.info("take over disbursement notification json in detail level payload: {}" , loanDisburseNotApiDetailDto);
 
                 ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
                 apiReqHeaderDto.setFspCode(fsp.getFspCode());
@@ -387,7 +335,7 @@ public class DisbursementServiceImpl implements DisbursementService {
                 LoanDisburseNotApiDataDto loanDisburseNotApiDataDto = new LoanDisburseNotApiDataDto();
                 loanDisburseNotApiDataDto.setRequestHeader(apiReqHeaderDto);
                 loanDisburseNotApiDataDto.setMessageLoanDisburseDetails(loanDisburseNotApiDetailDto);
-                logger.info("take over disbursement json in data level payload: " + loanDisburseNotApiDataDto);
+                log.info("take over disbursement json in data level payload: {}" , loanDisburseNotApiDataDto);
 
                 JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanDisburseNotApiDataDto.class);
                 Marshaller marshaller = jaxbContext2.createMarshaller();
@@ -395,7 +343,6 @@ public class DisbursementServiceImpl implements DisbursementService {
                 StringWriter stringWriter = new StringWriter();
                 marshaller.marshal(loanDisburseNotApiDataDto, stringWriter);
                 String xmlPayload = stringWriter.toString();
-                System.out.println("take over disbursement xml payload: " + xmlPayload);
                 if (xmlPayload != null) {
                     // Replace comma with a period
                     String xmlPayloadFirstClean = xmlPayload.replace("&lt;", "<");
@@ -403,23 +350,17 @@ public class DisbursementServiceImpl implements DisbursementService {
                      xmlPayload = xmlPayloadSecondClean.replace("&gt;", ">");
                 }
 
-                logger.info("take over disbursement xml payload:" + xmlPayload);
+                log.info("take over disbursement xml payload:{}" , xmlPayload);
 
                 ResponseEntity<String> responseEntityDisburse = loanService.generateRequestSignature2(xmlPayload);
 
-                logger.info("take over disbursement notification utumishi response" + responseEntityDisburse);
 
-                utils.sendMessage(
-                        rabbitMqParameters.getExchange(),
-                        rabbitMqParameters.getApprovalAndDisbursRoutingKey(),
-                        String.valueOf(responseEntityDisburse));
-
-                logger.info("utumishi response message for take over disbursement notification sent to the queue: {}", responseEntityDisburse);
+                log.info("utumishi response message for take over disbursement notification sent to the queue: {}", responseEntityDisburse);
 
                 return responseEntityDisburse;
 
             } catch (Exception e) {
-                logger.info("fail to send take over disbursement to utumishi ");
+                log.info("fail to send take over disbursement to utumishi ");
                 return null;
             }
         }

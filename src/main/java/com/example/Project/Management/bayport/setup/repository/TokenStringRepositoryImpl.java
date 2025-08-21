@@ -1,14 +1,12 @@
-package com.dflex.emkopo.app.setup.repository;
-
-import java.util.ArrayList;
-import java.util.List;
-
-
-import org.springframework.stereotype.Repository;
+package com.example.Project.Management.bayport.setup.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 

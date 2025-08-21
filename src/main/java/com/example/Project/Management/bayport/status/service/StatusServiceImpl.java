@@ -1,7 +1,7 @@
-package com.dflex.emkopo.app.status.service;
+package com.example.Project.Management.bayport.status.service;
 
-import com.dflex.emkopo.app.status.entity.Status;
-import com.dflex.emkopo.app.status.repository.StatusRepository;
+import com.example.Project.Management.bayport.status.entity.Status;
+import com.example.Project.Management.bayport.status.repository.StatusRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,18 +31,6 @@ public class StatusServiceImpl implements StatusService{
     @Override
     public void deleteStatus(Long id) {
         statusRepository.deleteById(id);
-    }
-
-    @Override
-    public Status updateStatus(Long id, Status updateStatus) {
-        Status existStatus = statusRepository.findById(id).orElse(null);
-        if (existStatus !=null){
-            existStatus.setName(updateStatus.getName());
-            existStatus.setDescription(updateStatus.getDescription());
-            return statusRepository.save(existStatus);
-        }
-
-        return null;
     }
 
 }

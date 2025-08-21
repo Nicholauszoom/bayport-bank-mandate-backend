@@ -1,4 +1,4 @@
-package com.dflex.emkopo.setup.dto;
+package com.example.Project.Management.bayport.setup.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;

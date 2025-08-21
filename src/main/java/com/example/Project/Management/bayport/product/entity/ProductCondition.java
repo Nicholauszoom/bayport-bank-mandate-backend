@@ -1,10 +1,7 @@
 package com.example.Project.Management.bayport.product.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
@@ -19,6 +16,8 @@ import java.util.UUID;
  *
  */
 
+@Getter
+@Setter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,16 +33,6 @@ public class ProductCondition implements Serializable {
 	@SequenceGenerator(name = "product_condition_id_generator", sequenceName = "seq_product_condition", initialValue = 1, allocationSize = 1)
 	@Column(name = "id", nullable = false, precision = 11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="product_condition_uid",nullable = false)
-	private UUID productConditionUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setProductConditionUid(UUID.randomUUID());
-    }
 
 	@Column(name = "condition_number", length = 20, nullable = false)
 	private String conditionNumber;

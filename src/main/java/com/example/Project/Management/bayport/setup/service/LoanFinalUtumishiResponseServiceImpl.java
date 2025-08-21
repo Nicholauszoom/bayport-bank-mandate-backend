@@ -1,8 +1,7 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
 
-import com.dflex.emkopo.app.loan.entity.LoanFinalUtumishiResponse;
-import com.dflex.emkopo.app.setup.entity.UtumishiResponse;
-import com.dflex.emkopo.app.setup.repository.LoanFianalUtumishiResponseRepository;
+import com.example.Project.Management.bayport.loan.entity.LoanFinalUtumishiResponse;
+import com.example.Project.Management.bayport.setup.repository.LoanFianalUtumishiResponseRepository;
 
 public class LoanFinalUtumishiResponseServiceImpl implements LoanFinalUtumishiResponseService{
 

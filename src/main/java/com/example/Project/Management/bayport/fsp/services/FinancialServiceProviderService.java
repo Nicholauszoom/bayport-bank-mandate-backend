@@ -1,8 +1,7 @@
-package com.dflex.emkopo.app.fsp.services;
+package com.example.Project.Management.bayport.fsp.services;
 
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
-import com.dflex.emkopo.app.fsp.models.forms.FspCategoryForm;
-import com.dflex.emkopo.app.fsp.models.forms.FspForm;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
+import com.example.Project.Management.bayport.fsp.models.forms.FspForm;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,17 +13,9 @@ import java.util.Optional;
  */
 
 public interface FinancialServiceProviderService {
-	/**
-	 * Registers a new Financial Service Provider
-	 * @param fspForm - Carries fsp registration data
-	 * @return FinancialServiceProvider
-	 */
-	FinancialServiceProvider create(FspForm fspForm);
-	
-	FinancialServiceProvider findById(Long id);
 
-	FinancialServiceProvider update(Long fspId, FspForm fspForm);
-	
+	Optional<FinancialServiceProvider> findById(Long id);
+
 	FinancialServiceProvider findByFspCodeAndRecordStatusId(String fspCode, Long recordStatusId);
 	
 	List<FinancialServiceProvider> findByFspCategoryId(Long paymentFacilitatorCategoryId);

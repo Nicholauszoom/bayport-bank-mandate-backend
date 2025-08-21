@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.setup.dto.response;
+package com.example.Project.Management.bayport.setup.dto.response;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

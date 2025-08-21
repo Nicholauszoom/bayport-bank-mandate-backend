@@ -1,15 +1,16 @@
-package com.dflex.emkopo.app.disbursement.entity;
+package com.example.Project.Management.bayport.disbursement.entity;
 
-import com.dflex.emkopo.app.loan.entity.Loan;
+import com.example.Project.Management.bayport.common.enumerator.RequestAction;
+import com.example.Project.Management.bayport.loan.entity.Loan;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -26,11 +27,6 @@ public class Disbursement implements Serializable {
     @Column(name = "id", nullable = false, precision = 11)
     private Long id;
 
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name="disbursement_uid",nullable = false)
-    private UUID disbursementUid;
-
     @Column(name = "disbursement_date")
     private Date disbursementDate;
 
@@ -39,6 +35,9 @@ public class Disbursement implements Serializable {
 
     @Column(name = "disbursement_status")
     private String disbursementStatus;
+
+    @Column(name = "request_action")
+    private RequestAction action;
 
     @Column(name = "disbursement_method")
     private String disbursementMethod;

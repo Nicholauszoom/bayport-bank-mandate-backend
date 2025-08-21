@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/fsp")
+@RequestMapping("/api/fsp")
 public class FinancialServiceProviderController {
     private final FinancialServiceProviderService fspService;
 

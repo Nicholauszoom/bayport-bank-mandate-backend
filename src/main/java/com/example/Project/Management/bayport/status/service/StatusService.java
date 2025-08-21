@@ -1,6 +1,7 @@
-package com.dflex.emkopo.app.status.service;
+package com.example.Project.Management.bayport.status.service;
 
-import com.dflex.emkopo.app.status.entity.Status;
+import com.example.Project.Management.bayport.status.entity.Status;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -14,8 +15,6 @@ public interface StatusService {
      Optional<Status> findById(Long id);
 
      void deleteStatus(Long id);
-
-     Status updateStatus(Long id, Status updateStatus);
 
 
 }

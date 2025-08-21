@@ -1,6 +1,6 @@
-package com.dflex.emkopo.app.setup.repository;
+package com.example.Project.Management.bayport.setup.repository;
 
-import com.dflex.emkopo.app.setup.entity.FSPDflexResponse;
+import com.example.Project.Management.bayport.setup.entity.FSPDflexResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FSPDflexResponseRepository extends JpaRepository<FSPDflexResponse, Long> {

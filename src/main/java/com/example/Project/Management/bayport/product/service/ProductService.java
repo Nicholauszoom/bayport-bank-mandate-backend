@@ -1,6 +1,7 @@
 package com.example.Project.Management.bayport.product.service;
 
-import com.dflex.emkopo.app.product.entity.Product;
+import com.example.Project.Management.bayport.product.dto.portal.ProductDto;
+import com.example.Project.Management.bayport.product.entity.Product;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -17,9 +18,6 @@ public interface ProductService {
 	List<Product> getAllProducts();
 
 	Optional<Product> findById(Long id);
-
-	ResponseEntity<String> saveProduct(String message) throws Exception;
-
 	
 	Product findByProductCode(String productCode);
 
@@ -29,9 +27,7 @@ public interface ProductService {
 
 	List<Product> findByFspCodeAndRecordStatusId(String fspCode,Long recordStatusId);
 
-//	Response<Product> registerProductFromPortal(ProductDto productDto);
+	ResponseEntity<?> registerProductFromPortal(ProductDto productDto) throws Exception;
 
-	ResponseEntity<String> registerProductFromBayPort(String message) throws Exception;
-
-	ResponseEntity<String> saveProductPortalQueue(String message) throws Exception;
+    List<Product> findAll();
 }

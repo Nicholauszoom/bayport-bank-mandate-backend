@@ -22,6 +22,10 @@ public class Response  {
         this.path = path;
     }
 
+    public Response() {
+
+    }
+
     public String getTimestamp() {
         return timestamp;
     }

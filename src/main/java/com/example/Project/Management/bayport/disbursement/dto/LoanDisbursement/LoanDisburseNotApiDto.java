@@ -1,4 +1,4 @@
-package com.dflex.emkopo.app.disbursement.dto.LoanDisbursement;
+package com.example.Project.Management.bayport.disbursement.dto.LoanDisbursement;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

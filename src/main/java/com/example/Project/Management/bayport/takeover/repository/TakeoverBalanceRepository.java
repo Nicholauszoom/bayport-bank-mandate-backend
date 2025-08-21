@@ -1,6 +1,6 @@
-package com.dflex.emkopo.app.balance.takeover.repository;
+package com.example.Project.Management.bayport.takeover.repository;
 
-import com.dflex.emkopo.app.balance.takeover.entity.Takeoverbal;
+import com.example.Project.Management.bayport.takeover.entity.Takeoverbal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

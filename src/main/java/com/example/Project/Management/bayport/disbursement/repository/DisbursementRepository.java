@@ -1,11 +1,8 @@
-package com.dflex.emkopo.app.disbursement.repository;
+package com.example.Project.Management.bayport.disbursement.repository;
 
-import com.dflex.emkopo.app.disbursement.entity.Disbursement;
-import com.dflex.emkopo.app.loan.entity.Loan;
+import com.example.Project.Management.bayport.disbursement.entity.Disbursement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
 
 @Repository
 public interface DisbursementRepository extends JpaRepository<Disbursement, Long> {

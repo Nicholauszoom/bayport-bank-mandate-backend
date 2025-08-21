@@ -1,5 +1,5 @@
-package com.example.Project.Management.bayport.product.enumerator;
+package com.example.Project.Management.bayport.common.enumerator;
 
-public enum ProductAction {
-    REGISTER, DECOMMISION
+public enum RequestAction {
+    REGISTER, DECOMMISION, ACCEPT, REJECT
 }

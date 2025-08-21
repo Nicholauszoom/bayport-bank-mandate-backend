@@ -1,15 +1,14 @@
-package com.dflex.emkopo.app.borrower.entity;
+package com.example.Project.Management.bayport.borrower.entity;
 
-import com.dflex.emkopo.app.fsp.models.entities.FinancialServiceProvider;
+import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
+@Getter
+@Setter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

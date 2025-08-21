@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -22,11 +21,11 @@ public class CommonEntity {
     @CreationTimestamp
     private Date createdDate;
 
-    @Column(name="updated_date", nullable=true ,updatable = true)
+    @Column(name="updated_date")
     private Date updatedDate;
 
-    @Column(name="created_by", nullable=false,updatable = false)
-    private UUID createdBy;
+//    @Column(name="created_by")
+//    private Long createdBy;
 
 
 }

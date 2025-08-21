@@ -7,8 +7,8 @@ import com.example.Project.Management.bayport.auth.enumerated.Permission;
 import com.example.Project.Management.bayport.auth.enumerated.Role;
 import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.auth.user.repository.UserRepository;
-import com.example.Project.Management.bayport.project.entity.Project;
 import jakarta.mail.MessagingException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Slf4j
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,7 +38,7 @@ public class AuthenticationService {
     }
 
     public User signup(RegisterUserDto input) {
-        User user = new User(input.getUsername(), input.getEmail(), passwordEncoder.encode(input.getPassword()), input.getUsername());
+        User user = new User(input.getUsername(), input.getEmail(), passwordEncoder.encode(input.getPassword()), input.getUsername(), input.getRole());
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
         user.setEnabled(false);
@@ -67,9 +68,15 @@ public class AuthenticationService {
         Optional<User> optionalUser = userRepository.findByEmail(input.getEmail());
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+
+            if (user.getVerificationCodeExpiresAt() == null) {
+                throw new RuntimeException("Verification code is missing or invalid");
+            }
+
             if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
                 throw new RuntimeException("Verification code has expired");
             }
+
             if (user.getVerificationCode().equals(input.getVerificationCode())) {
                 user.setEnabled(true);
                 user.setVerificationCode(null);
@@ -105,11 +112,14 @@ public class AuthenticationService {
         String htmlMessage = "<html>"
                 + "<body style=\"font-family: Arial, sans-serif;\">"
                 + "<div style=\"background-color: #f5f5f5; padding: 20px;\">"
-                + "<h2 style=\"color: #333;\">Welcome to our app!</h2>"
+                + "<h2 style=\"color: #333;\">Welcome to Bayport E-loan!</h2>"
                 + "<p style=\"font-size: 16px;\">Please enter the verification code below to continue:</p>"
-                + "<div style=\"background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
+                + "<div style=\"background-color: #fff; padding: 20px; border-radius: 5px; "
+                + "box-shadow: 0 0 10px rgba(0,0,0,0.1);\">"
                 + "<h3 style=\"color: #333;\">Verification Code:</h3>"
                 + "<p style=\"font-size: 18px; font-weight: bold; color: #007bff;\">" + verificationCode + "</p>"
+                + "<p style=\"font-size: 16px;\">Please navigate to this link to verify your account: "
+                + "<a href='http://10.25.32.30:8083/verify' style='color:#007bff; text-decoration:none;'>Go to Login Page</a></p>"
                 + "</div>"
                 + "</div>"
                 + "</body>"
@@ -153,17 +163,17 @@ public class AuthenticationService {
         return userPermissions != null && userPermissions.contains(permission);
     }
 
-    public boolean canAccessProject(User user, Project project) {
-        //admin can access all projects and project owner can access
-        if(user.getRole() == Role.ADMIN || user.getId() == project.getUser().getId()) {
-            return true;
-        }
-        return false;
-    }
-
-    public boolean canDeleteProject(User user, Project project) {
-        // Only admins or project owners can delete projects
-        return user.getRole() == Role.ADMIN ||
-                project.getUser().getId().equals(user.getId());
-    }
+//    public boolean canAccessProject(User user, Project project) {
+//        //admin can access all projects and project owner can access
+//        if(user.getRole() == Role.ADMIN || user.getId() == project.getUser().getId()) {
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    public boolean canDeleteProject(User user, Project project) {
+//        // Only admins or project owners can delete projects
+//        return user.getRole() == Role.ADMIN ||
+//                project.getUser().getId().equals(user.getId());
+//    }
 }

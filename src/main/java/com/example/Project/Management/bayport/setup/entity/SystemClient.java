@@ -1,27 +1,12 @@
-package com.dflex.emkopo.app.setup.entity;
+package com.example.Project.Management.bayport.setup.entity;
+
+import com.example.Project.Management.bayport.common.entity.CommonEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
 import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import com.dflex.emkopo.commons.utils.CommonEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 /**
  * @author Augustino Mwageni
@@ -37,7 +22,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper=false)
 @Entity
 @Table(name = "tab_system_client", uniqueConstraints= {@UniqueConstraint(columnNames={"client_id", "client_system_id", "client_category_id"})})
-public class SystemClient extends CommonEntity implements Serializable {
+public class SystemClient implements Serializable {
 
 	private static final long serialVersionUID = 6984936841911656937L;
 
@@ -46,17 +31,7 @@ public class SystemClient extends CommonEntity implements Serializable {
 	@SequenceGenerator(name="system_client_id_generator", sequenceName="seq_system_client", initialValue=1, allocationSize = 1)
 	@Column(name="id", unique=true, nullable=false, precision=11)
 	private Long id;
-	
-	@GeneratedValue
-	@UuidGenerator
-	@Column(name="system_client_uid",nullable = false)
-	private UUID systemClientUid;
-	
-	@PrePersist
-    protected void onCreate() {
-        setSystemClientUid(java.util.UUID.randomUUID());
-    }
-	
+
 	@Column(name="client_id", nullable=false)
 	private Long clientId;
 	

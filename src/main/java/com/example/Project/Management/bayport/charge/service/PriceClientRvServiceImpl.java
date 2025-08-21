@@ -16,12 +16,12 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class PriceServiceImpl implements PriceService {
+public class PriceClientRvServiceImpl implements PriceClientRvService {
     private final PriceRepository priceRepository;
 
     private final ClientRvRepository clientRvRepository;
 
-    public PriceServiceImpl(PriceRepository priceRepository, ClientRvRepository clientRvRepository) {
+    public PriceClientRvServiceImpl(PriceRepository priceRepository, ClientRvRepository clientRvRepository) {
         this.priceRepository = priceRepository;
         this.clientRvRepository = clientRvRepository;
     }
@@ -42,8 +42,10 @@ public class PriceServiceImpl implements PriceService {
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null || isRowEmpty(row)) continue;
-
+                if (row == null || isRowEmpty(row)) {
+//                    log.debug("Skipping empty row at index: {}", i);
+                    continue;
+                }
                 try {
                     Price price = new Price();
                     price.setProductName(getStringValue(row.getCell(0), evaluator));
@@ -111,6 +113,21 @@ public class PriceServiceImpl implements PriceService {
         } else {
             log.warn("No valid client rv records found in the Excel file");
         }
+    }
+
+    @Override
+    public ClientRv findByCheckNumber(String checkNumber) {
+        return clientRvRepository.findByCheckNumber(checkNumber);
+    }
+
+    @Override
+    public Price findWithMaxLoanTermAndDescription(String description) {
+        return priceRepository.findWithMaxLoanTermAndDescription(description);
+    }
+
+    @Override
+    public Price findWithXLoanTermAndDescription(String description, int tenure) {
+        return priceRepository.findWithXLoanTermAndDescription(description, tenure);
     }
 
 

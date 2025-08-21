@@ -18,6 +18,8 @@ import java.util.Date;
 @XmlRootElement(name = "MessageDetails")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LoanRegistrationReqDetailDto {
+    @XmlElement(name = "CheckNumber")
+    private String checkNumber;
 
     @XmlElement(name = "FirstName")
     private String firstName;
@@ -124,14 +126,10 @@ public class LoanRegistrationReqDetailDto {
     @XmlElement(name = "ContractEndDate")
     private Date contractEndDate;
 
-    @XmlElement(name = "CheckNumber")
-    private String checkNumber;
-
     @XmlElement(name = "SwiftCode")
     private String swiftCode;
 
     @XmlElement(name = "Funding")
     private String funding;
-
 
 }

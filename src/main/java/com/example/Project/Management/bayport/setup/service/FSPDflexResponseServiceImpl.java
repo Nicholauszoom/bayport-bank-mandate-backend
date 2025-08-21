@@ -1,8 +1,7 @@
-package com.dflex.emkopo.app.setup.service;
+package com.example.Project.Management.bayport.setup.service;
 
-import com.dflex.emkopo.app.setup.entity.FSPDflexResponse;
-import com.dflex.emkopo.app.setup.repository.FSPDflexResponseRepository;
-import com.dflex.emkopo.app.setup.repository.UtumishiResponseRepository;
+import com.example.Project.Management.bayport.setup.entity.FSPDflexResponse;
+import com.example.Project.Management.bayport.setup.repository.FSPDflexResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class FSPDflexResponseServiceImpl implements FSPDflexResponseService{
