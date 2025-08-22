@@ -3,19 +3,24 @@ package com.example.Project.Management.bayport.loan.service;
 import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
 import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDto;
 import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.charge.entity.Charge;
+import com.example.Project.Management.bayport.charge.repository.ChargeRepository;
 import com.example.Project.Management.bayport.common.Constants;
 import com.example.Project.Management.bayport.common.DigitalSignature;
 import com.example.Project.Management.bayport.common.enumerator.LoanType;
+import com.example.Project.Management.bayport.common.enumerator.RequestAction;
 import com.example.Project.Management.bayport.common.enumerator.RequestType;
 import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
 import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderRepository;
 import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDataDto;
 import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDetailDto;
+import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDto;
 import com.example.Project.Management.bayport.loan.dto.approval.loan_utumishi_final_response.LoanFinalResponseApiDataDto;
 import com.example.Project.Management.bayport.loan.dto.approval.loan_utumishi_final_response.LoanFinalResponseApiDto;
 import com.example.Project.Management.bayport.loan.dto.cancellation.LoanCancellationApiDto;
 import com.example.Project.Management.bayport.loan.dto.cancellation.LoanCancellationApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssNotificationApiRespDataDto;
+import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssRequestLoanInitialApprovePortalDto;
 import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssResponseLoanInitialApprovePortalDto;
 import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.PaymentNotfRespDataDto;
 import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.RequestPaymentAcknPortalDto;
@@ -139,17 +144,16 @@ public class LoanServiceImpl implements LoanService {
     @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
-    private RepaymentRepository repaymentRepository;
+    private final ChargeRepository chargeRepository;
     
     public LoanServiceImpl(
             Utils utils, DigitalSignature digitalSignature, LoanRepository loanRepository,
-            ProductRepository productRepository, RepaymentRepository repaymentRepository, FinancialServiceProviderRepository financialServiceProviderRepository, StatusRepository statusRepository, StringUtil stringUtil) {
+            ProductRepository productRepository, FinancialServiceProviderRepository financialServiceProviderRepository, StatusRepository statusRepository, StringUtil stringUtil, ChargeRepository chargeRepository) {
         this.utils = utils;
         this.digitalSignature = digitalSignature;
         this.loanRepository = loanRepository;
         this.productRepository = productRepository;
-        this.repaymentRepository = repaymentRepository;
+        this.chargeRepository = chargeRepository;
         this.financialServiceProviderRepository =financialServiceProviderRepository;
         this.statusRepository =statusRepository;
         this.stringUtil = stringUtil;
@@ -167,6 +171,7 @@ public class LoanServiceImpl implements LoanService {
         String fspCode = loanRegistrationApiReqDto.getLoanRegistrationData().getRequestHeader().getFspCode();
         String mssId = loanRegistrationApiReqDto.getLoanRegistrationData().getRequestHeader().getMsgId();
         String messageType = loanRegistrationApiReqDto.getLoanRegistrationData().getRequestHeader().getMessageType();
+        String checkNumber =loanRegistrationApiReqDto.getLoanRegistrationData().getLoanRegistrationDetail().getCheckNumber();
         try {
             String loanApplicationNumber = loanRegistrationApiReqDto.getLoanRegistrationData().getLoanRegistrationDetail().getApplicationNumber();
 
@@ -189,6 +194,12 @@ public class LoanServiceImpl implements LoanService {
                 return createResponseEntity(ResponseCodes.DUPLICATE_REQUEST, fspCode, mssId);
             }
 
+            Charge charge = chargeRepository.findLatestChargeByChecknumber(checkNumber);
+            if (charge == null) {
+                log.info("No charge found with checknumber: {}", checkNumber);
+                return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+            }
+
             LoanType loanType = switch (messageType) {
                 case Constants.LOAN_OFFER_REQUEST -> LoanType.NEW;
                 case Constants.TOP_UP_OFFER_REQUEST -> LoanType.TOPUP;
@@ -197,7 +208,7 @@ public class LoanServiceImpl implements LoanService {
             };
 
             // save
-            Loan savedLoan = saveloan(loanRegistrationApiReqDto.getLoanRegistrationData().getLoanRegistrationDetail(), loanType, RequestType.fsp_received);
+            Loan savedLoan = saveloan(loanRegistrationApiReqDto.getLoanRegistrationData().getLoanRegistrationDetail(), loanType, RequestType.fsp_received, charge);
 
             if (savedLoan == null) {
                 return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
@@ -212,7 +223,7 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
-    public Loan saveloan(LoanRegistrationReqDetailDto loanRegistrationReqDetailDto, LoanType loanType, RequestType requestType) {
+    public Loan saveloan(LoanRegistrationReqDetailDto loanRegistrationReqDetailDto, LoanType loanType, RequestType requestType, Charge charge) {
         try {
             Loan loan = Loan.builder()
                     .firstName(loanRegistrationReqDetailDto.getFirstName())
@@ -255,6 +266,7 @@ public class LoanServiceImpl implements LoanService {
                     .funding(loanRegistrationReqDetailDto.getFunding())
                     .loanType(loanType)
                     .requestType(requestType)
+                    .chargeId(charge.getId())
                     .build();
 
             Loan savedLoan=loanRepository.save(loan);
@@ -333,7 +345,72 @@ public class LoanServiceImpl implements LoanService {
                 .build();
     }
 
+    @Override
+    public ResponseEntity<String> loanInitialApproveNotification(Long id, RequestAction requestAction) throws Exception {
+        String mssId = generateMessageId();
+        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
+        FinancialServiceProvider fsp = null;
+        if (!fspList.isEmpty()) {
+            fsp = fspList.get(0);
+        }
+        try {
+            Optional<Loan> loanOption = loanRepository.findById(id);
+            if (loanOption.isEmpty()) {
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loan Not Found , loanId: "+ id);
+            }
+            Loan loan = loanOption.get();
 
+            Optional<Charge> chargeOpt = chargeRepository.findById(loan.getChargeId());
+            if (chargeOpt.isEmpty()) {
+                log.info("No charge found with checknumber: {}", loanOption.get().getCheckNumber());
+                return ResponseEntity.ok("No charge found");
+            }
+            Charge charge = chargeOpt.get();
+            log.info("Charge found with checknumber: {},{}", loan.getCheckNumber(), requestAction);
+
+            LoanApprovalApiDetailDto loanApprovalApiDetailDto = new LoanApprovalApiDetailDto();
+            loanApprovalApiDetailDto.setApplicationNumber(loan.getApplicationNumber());
+            loanApprovalApiDetailDto.setReason(requestAction.name());
+            loanApprovalApiDetailDto.setFspReferenceNumber(String.valueOf(loan.getId()));
+            loanApprovalApiDetailDto.setLoanNumber(String.valueOf(loan.getId()));
+            loanApprovalApiDetailDto.setTotalAmountToPay(charge.getTotalAmountToPay());
+            loanApprovalApiDetailDto.setOtherCharges(charge.getOtherCharges());
+            loanApprovalApiDetailDto.setApproval(requestAction.name());
+
+            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
+            apiReqHeaderDto.setFspCode(fsp.getFspCode());
+            apiReqHeaderDto.setMsgId(mssId);
+            apiReqHeaderDto.setMessageType(Constants.LOAN_INITIAL_APPROVAL_NOTIFICATION);
+            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDto.setSender(fsp.getFspName());
+
+            LoanApprovalApiDataDto loanApprovalApiDataDto = new LoanApprovalApiDataDto();
+            loanApprovalApiDataDto.setRequestHeader(apiReqHeaderDto);
+            loanApprovalApiDataDto.setMessageDetails(loanApprovalApiDetailDto);
+
+            JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanApprovalApiDataDto.class);
+            Marshaller marshaller = jaxbContext2.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriter = new StringWriter();
+            marshaller.marshal(loanApprovalApiDataDto, stringWriter);
+            String xmlPayload = stringWriter.toString();
+
+            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
+
+            // Update loan
+            if (requestAction.equals(RequestAction.APPROVED)) {
+                loan.setRequestType(RequestType.fsp_accepted);
+            } else {
+                loan.setRequestType(RequestType.fsp_rejected);
+            }
+            loanRepository.save(loan);
+
+            return responseEntity;
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @Override
     public ResponseEntity<String> loanCancellation(String message) throws Exception {
@@ -343,22 +420,27 @@ public class LoanServiceImpl implements LoanService {
         LoanCancellationApiDto loanCancellationApiDto = (LoanCancellationApiDto) unmarshaller.unmarshal(stringReader);
         String fspCode = loanCancellationApiDto.getLoanCancellationApiReqData().getRequestHeader().getFspCode();
         String mssId = loanCancellationApiDto.getLoanCancellationApiReqData().getRequestHeader().getMsgId();
+        String applicationNumber = loanCancellationApiDto.getLoanCancellationApiReqData().getMessageDetails().getApplicationNumber();
         log.info("Received loan cancellation request: {}", message);
 
         try {
-            LoanCancellation loanCancellation = new LoanCancellation();
-            loanCancellation.setReason(loanCancellationApiDto.getLoanCancellationApiReqData().getMessageDetails().getReason());
+            Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
+            if (fsp.isEmpty()) {
+                log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
+                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER,  fspCode, mssId);
+            }
 
-            // convert l application request data into xml(string)
-            JAXBContext jaxbContextReq = JAXBContext.newInstance(LoanCancellationApiReqDataDto.class);
-            Marshaller marshallerLRq = jaxbContextReq.createMarshaller();
-            marshallerLRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterLRq = new StringWriter();
-            marshallerLRq.marshal(loanCancellationApiDto.getLoanCancellationApiReqData(), stringWriterLRq);
-            String loanUtumishiRq = stringWriterLRq.toString();
+            Optional<Loan> loanOption = loanRepository.findByApplicationNumber(applicationNumber);
+            if (loanOption.isEmpty()) {
+                log.info("Loan Not Found , applicationNumber: {}", applicationNumber);
+                return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+            }
+            Loan loan = loanOption.get();
+            loan.setEssApprovalReason(loanCancellationApiDto.getLoanCancellationApiReqData().getMessageDetails().getReason());
+            loan.setRequestType(RequestType.employee_rejected);
+            loanRepository.save(loan);
 
-            log.info("prepared request sent to the queue: " + loanUtumishiRq);
-
+            log.info("Loan Cancellation Success");
             return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
 
         } catch (Exception e) {
@@ -366,6 +448,77 @@ public class LoanServiceImpl implements LoanService {
             return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
         }
     }
+
+    @Override
+    public ResponseEntity<String> loanFinalApprovalNotification(String message) throws Exception {
+        log.info("Received loan Final Approval Notification request: {}", message);
+        JAXBContext jaxbContext = JAXBContext.newInstance(LoanApprovalApiDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(message);
+        LoanApprovalApiDto loanApprovalApiDto = (LoanApprovalApiDto) unmarshaller.unmarshal(stringReader);
+        String fspCode = loanApprovalApiDto.getLoanApprovalApiDataDto().getRequestHeader().getFspCode();
+        String mssId = loanApprovalApiDto.getLoanApprovalApiDataDto().getRequestHeader().getMsgId();
+        String applicationNumber = loanApprovalApiDto.getLoanApprovalApiDataDto().getMessageDetails().getApplicationNumber();
+        RequestAction requestAction = RequestAction.valueOf(loanApprovalApiDto.getLoanApprovalApiDataDto().getMessageDetails().getApproval());
+        try {
+
+            Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
+            if (fsp.isEmpty()) {
+                log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
+                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER,  fspCode, mssId);
+            }
+
+            Optional<Loan> loanOption = loanRepository.findByApplicationNumber(applicationNumber);
+            if (loanOption.isEmpty()) {
+                log.info("Loan Not Found , applicationNumber: {}", applicationNumber);
+                return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+            }
+            Loan loan = loanOption.get();
+            loan.setEssApprovalReason(loanApprovalApiDto.getLoanApprovalApiDataDto().getMessageDetails().getReason());
+            if (requestAction.equals(RequestAction.APPROVED)) {
+                loan.setRequestType(RequestType.hro_approved);
+            } else {
+                loan.setRequestType(RequestType.hro_rejected);
+            }
+            loanRepository.save(loan);
+            log.info("Loan Final Approval Success");
+            return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
+
+        }catch (Exception e){
+            log.info(e.getMessage());
+            return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR,fspCode, mssId);
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -638,57 +791,6 @@ public class LoanServiceImpl implements LoanService {
 
     }
 
-
-    @Override
-    public ResponseEntity<String> loanFinalApprovalNotification(String message) throws Exception {
-
-        log.info("Received loan Final Approval Notification request: {}", message);
-
-        JAXBContext jaxbContext = JAXBContext.newInstance(LoanFinalResponseApiDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        LoanFinalResponseApiDto loanFinalResponseApiDto = (LoanFinalResponseApiDto) unmarshaller.unmarshal(stringReader);
-        String fspCode = loanFinalResponseApiDto.getLoanFinalResponseApiDataDto().getRequestHeader().getFspCode();
-        String mssId = loanFinalResponseApiDto.getLoanFinalResponseApiDataDto().getRequestHeader().getMsgId();
-
-        try {
-            //Access values
-            String loanNumber = loanFinalResponseApiDto.getLoanFinalResponseApiDataDto().getLoanFinalResponseDetailDto().getLoanNumber();
-
-            //loan pay off operation
-            Optional<FinancialServiceProvider> fsp =
-                    financialServiceProviderRepository.findByFspCode(fspCode);
-
-            if (fsp.isEmpty()) {
-                log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
-                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER,  fspCode, mssId);
-            }
-
-            // convert l application request data into xml(string)
-            JAXBContext jaxbContextReq = JAXBContext.newInstance(LoanFinalResponseApiDataDto.class);
-            Marshaller marshallerLRq = jaxbContextReq.createMarshaller();
-            marshallerLRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterLRq = new StringWriter();
-            marshallerLRq.marshal(loanFinalResponseApiDto.getLoanFinalResponseApiDataDto(), stringWriterLRq);
-            String loanUtumishiRq = stringWriterLRq.toString();
-
-            log.info("prepared request sent to the queue: " + loanUtumishiRq);
-
-            // publish to send to the Queue
-
-
-            log.info("request sent to the queue: " + loanUtumishiRq);
-
-            log.info("loan final approve response is successfull i.e Loan Number:" + loanNumber);
-            return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
-
-        }catch (Exception e){
-            log.info(e.getMessage());
-            return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR,fspCode, mssId);
-
-        }
-    }
-
     @Override
     public List<Loan> findByFspCode(String fspByCode) {
         return findByFspCode(fspByCode);
@@ -839,7 +941,6 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private String sendXmlToApi(String xml) throws Exception {
-        // Log the final XML request
         log.info("Final CURL XML request sent to Utumishi: {}", xml);
 
         URL url = new URL(utumishiApiUrl);
@@ -881,153 +982,11 @@ public class LoanServiceImpl implements LoanService {
     }
 
 
-    @Override
-    public ResponseEntity<String> loanInitialApproveNotification(String message) throws Exception {
-//        JAXBContext jaxbContext = JAXBContext.newInstance(LoanInitialApprovePortalDto.class);
-//        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-//        StringReader stringReader = new StringReader(message);
-//        LoanInitialApprovePortalDto loanInitialApprovePortalDto = (LoanInitialApprovePortalDto) unmarshaller.unmarshal(stringReader);
-        String mssId = generateMessageId();
-        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
-        FinancialServiceProvider fsp = null;
-        if (!fspList.isEmpty()) {
-            fsp = fspList.get(0);
-        }
-
-        try {
-
-            log.info("loan initial approve reach here: ********");
-
-            LoanApprovalApiDetailDto loanApprovalApiDetailDto = new LoanApprovalApiDetailDto();
-//            loanApprovalApiDetailDto.setApplicationNumber(loanInitialApprovePortalDto.getApplicationNumber());
-//            loanApprovalApiDetailDto.setReason(loanInitialApprovePortalDto.getReason());
-//            loanApprovalApiDetailDto.setFspReferenceNumber(fsp.getFspReferenceNumber());
-//            loanApprovalApiDetailDto.setLoanNumber(loanInitialApprovePortalDto.getLoanrequestid());
-//            String totaltopay = loanInitialApprovePortalDto.getTotalAmountToPay();
-//            if (totaltopay!=null) {
-//                // Remove comma
-//                String cleantotaltopay = totaltopay.replace(",", "");
-//                loanApprovalApiDetailDto.setTotalAmountToPay( new BigDecimal(cleantotaltopay).setScale(2, RoundingMode.HALF_UP));
-//            }
-//
-////            loanApprovalApiDetailDto.setTotalAmountToPay(new BigDecimal(totaltopay));
-//
-//            String otherCharges = loanInitialApprovePortalDto.getOtherCharges();
-//            if (otherCharges!=null) {
-//                // Remove comma
-//                String cleanOtherCharges = otherCharges.replace(",", "");
-//                loanApprovalApiDetailDto.setOtherCharges( new BigDecimal(cleanOtherCharges).setScale(2, RoundingMode.HALF_UP));
-//            }
-
-            log.info("loan initial approve reach here:" + loanApprovalApiDetailDto);
-//            loanApprovalApiDetailDto.setOtherCharges(new BigDecimal(loanInitialApprovePortalDto.getOtherCharges()));
-
-//            if(loanInitialApprovePortalDto.getAction().equals("REJECT")){
-//                loanApprovalApiDetailDto.setApproval("REJECTED");
-//            }
-//            if(loanInitialApprovePortalDto.getAction().equals("ACCEPT")){
-//                loanApprovalApiDetailDto.setApproval("APPROVED");
-//            }
-//            if(loanInitialApprovePortalDto.getAction().equals("CLOSE")){
-//
-//                return loanLiquidizationNotification(message);
-//            }
-
-
-            log.info("loan initial approve json in detail level payload: " + loanApprovalApiDetailDto);
-
-            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
-            apiReqHeaderDto.setFspCode(fsp.getFspCode());
-            apiReqHeaderDto.setMsgId(mssId);
-            apiReqHeaderDto.setMessageType(Constants.LOAN_INITIAL_APPROVAL_NOTIFICATION);
-            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
-            apiReqHeaderDto.setSender(fsp.getFspName());
-
-
-            LoanApprovalApiDataDto loanApprovalApiDataDto = new LoanApprovalApiDataDto();
-            loanApprovalApiDataDto.setRequestHeader(apiReqHeaderDto);
-            loanApprovalApiDataDto.setMessageDetails(loanApprovalApiDetailDto);
-
-            log.info("loan initial approve json in data level payload: " + loanApprovalApiDataDto);
-
-
-            JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanApprovalApiDataDto.class);
-            Marshaller marshaller = jaxbContext2.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriter = new StringWriter();
-            marshaller.marshal(loanApprovalApiDataDto, stringWriter);
-            String xmlPayload = stringWriter.toString();
-            System.out.println("charge xml payload: " + xmlPayload);
-
-            log.info("charge xml payload: " + xmlPayload);
-
-//            generateRequestSignature2(xmlPayload);
-
-            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
-
-            log.info("loan initial notification response" + responseEntity);
-
-            //save logs into database i.e tab_loan_logs
-
-            log.info("prepared utumishi response message sent to the queue:");
-
-            //Create a payload for request and response
-            //set request
-//            EssRequestLoanInitialApprovePortalDto essRequestLoanInitialApprovePortalDto = new EssRequestLoanInitialApprovePortalDto();
-//            essRequestLoanInitialApprovePortalDto.setApplicationNumber(loanInitialApprovePortalDto.getApplicationNumber());
-//            essRequestLoanInitialApprovePortalDto.setReason(loanInitialApprovePortalDto.getApplicationNumber());
-//            essRequestLoanInitialApprovePortalDto.setFspReferenceNumber(loanInitialApprovePortalDto.getApplicationNumber());
-//            essRequestLoanInitialApprovePortalDto.setLoanNumber(loanInitialApprovePortalDto.getLoanrequestid());
-//            essRequestLoanInitialApprovePortalDto.setTotalAmountToPay(loanInitialApprovePortalDto.getTotalAmountToPay());
-//            essRequestLoanInitialApprovePortalDto.setOtherCharges(loanInitialApprovePortalDto.getOtherCharges());
-//            essRequestLoanInitialApprovePortalDto.setApproval(loanInitialApprovePortalDto.getAction());
-
-
-            //set response
-            EssResponseLoanInitialApprovePortalDto essResponseLoanInitialApprovePortalDto = new EssResponseLoanInitialApprovePortalDto();
-            essResponseLoanInitialApprovePortalDto.setResponseDescription(String.valueOf(responseEntity));
-
-            //combine request and response
-            EssNotificationApiRespDataDto essNotificationApiRespDataDto= new EssNotificationApiRespDataDto();
-            essNotificationApiRespDataDto.setMessageRequest(null);
-            essNotificationApiRespDataDto.setMessageResponse(essResponseLoanInitialApprovePortalDto);
-
-
-
-            JAXBContext jaxbContext6 = JAXBContext.newInstance(EssNotificationApiRespDataDto.class);
-            Marshaller marshaller6 = jaxbContext6.createMarshaller();
-            marshaller6.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriter6 = new StringWriter();
-            marshaller6.marshal(essNotificationApiRespDataDto, stringWriter6);
-            String xmlPayload6 = stringWriter6.toString();
-            System.out.println("loan initial approval xml payload: " + xmlPayload6);
-            log.info("Combined initial loan approval and ess response" + xmlPayload6);
-            String cleanedXml6 = cleanMessage(xmlPayload6);
-
-            System.out.println("Cleaned loan initial approval xml payload: " + cleanedXml6);
-            log.info("Cleaned Combined initial loan approval and ess response" + cleanedXml6);
-
-            log.info("utumishi response message sent to the queue:{}", responseEntity);
-
-            return responseEntity;
-
-        } catch (Exception e) {
-            log.info("fail to send loan initial notification to utumishi");
-            return null;
-        }
-
-
-
-    }
-
     public static String cleanMessage(String xmlInput) {
-        // Decode HTML entities (e.g., &lt; to <, &gt; to >)
         String decodedXml = StringEscapeUtils.unescapeHtml4(xmlInput);
 
-        // Remove unwanted characters (e.g., &#13;)
         String partiallyCleanedXml = decodedXml.replaceAll("&#13;", "");
 
-        // Remove tags containing unwanted data (e.g., < and > if they appear as entities)
         String fullyCleanedXml = partiallyCleanedXml.replaceAll("&lt;", "")
                 .replaceAll("&gt;", "")
                 .replaceAll("<requestDescription>", "")
@@ -1049,13 +1008,9 @@ public class LoanServiceImpl implements LoanService {
         return fullyCleanedXml.trim();
     }
 
-
     public ResponseEntity<String> loanLiquidizationNotification(String message) throws Exception {
         log.info("loan liquidization notification" + message);
-//        JAXBContext jaxbContext = JAXBContext.newInstance(LoanInitialApprovePortalDto.class);
-//        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-//        StringReader stringReader = new StringReader(message);
-//        LoanInitialApprovePortalDto liquidizationNotificationDto = (LoanInitialApprovePortalDto) unmarshaller.unmarshal(stringReader);
+
         String mssId = generateMessageId();
         List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
         FinancialServiceProvider fsp = null;
@@ -1068,9 +1023,7 @@ public class LoanServiceImpl implements LoanService {
 //            loanLiquidizationApiReqDetailDto.setLoanNumber(liquidizationNotificationDto.getLoanrequestid());
 //            loanLiquidizationApiReqDetailDto.setRemarks(liquidizationNotificationDto.getReason());
 
-
             log.info("loanliquidization json in detail level payload: " + loanLiquidizationApiReqDetailDto);
-
 
             ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
             apiReqHeaderDto.setFspCode(fsp.getFspCode());
@@ -1079,13 +1032,11 @@ public class LoanServiceImpl implements LoanService {
             apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
             apiReqHeaderDto.setSender(fsp.getFspName());
 
-
             LoanLiquidizationApiReqDataDto loanLiquidizationApiReqDataDto = new LoanLiquidizationApiReqDataDto();
             loanLiquidizationApiReqDataDto.setRequestHeader(apiReqHeaderDto);
             loanLiquidizationApiReqDataDto.setLoanLiquidizationApiReqDetailDto(loanLiquidizationApiReqDetailDto);
 
             log.info("loan liquidization notification json in data level payload: " + loanLiquidizationApiReqDataDto);
-
 
             JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanLiquidizationApiReqDataDto.class);
             Marshaller marshaller = jaxbContext2.createMarshaller();
@@ -1096,12 +1047,10 @@ public class LoanServiceImpl implements LoanService {
             System.out.println("liquidization xml payload: " + xmlPayload);
 
             log.info("liquidization xml payload: " + xmlPayload);
-
             ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
 
             log.info("liquidization sent to be signed" + xmlPayload);
             log.info("liquidization response from ess" + responseEntity);
-
 
             return responseEntity;
 

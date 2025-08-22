@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/login", "/profile", "/user", "/user-add", "/charge", "/dashboard", "/verify", "/product", "/product-add", "/price-schedule").permitAll()
+                        .requestMatchers("/", "/login", "/profile", "/user**", "/user-add", "/charge/**", "/dashboard", "/verify", "/product/**", "/product-add", "/price-schedule", "/loan/**").permitAll()
 
                         .requestMatchers("/static/**", "/media/**", "/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
 
@@ -69,39 +69,41 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
+    // for manage local environment
 //    @Bean
 //    public CorsConfigurationSource corsConfigurationSource() {
 //        CorsConfiguration configuration = new CorsConfiguration();
-//
-//        // Add more potential origins
-//        configuration.setAllowedOrigins(List.of(
-//                "http://10.25.32.30:8083",
-//                "http://localhost:8083",
-//                "http://127.0.0.1:8083"
-//        ));
-//
-//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+//        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 //        configuration.setAllowedHeaders(List.of("*"));
 //        configuration.setAllowCredentials(true);
-//        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
 //
 //        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 //        source.registerCorsConfiguration("/**", configuration);
 //        return source;
 //    }
+
+    // for manage test and prod environmnet
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Add more potential origins
+        configuration.setAllowedOrigins(List.of(
+                "http://10.25.32.30:8083",
+                "http://localhost:8083",
+                "http://127.0.0.1:8083"
+        ));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     @Bean
     public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {

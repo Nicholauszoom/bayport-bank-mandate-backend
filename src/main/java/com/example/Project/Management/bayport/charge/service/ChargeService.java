@@ -17,4 +17,6 @@ public interface ChargeService {
     Optional<Charge> findById(long id);
 
     void deleteCharge(long id);
+
+    Charge findLatestChargeByChecknumber(String checkNumber);
 }

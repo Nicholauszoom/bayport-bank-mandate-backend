@@ -26,4 +26,7 @@ public interface ChargeRepository extends JpaRepository<Charge, Long> {
     @Query("SELECT c FROM Charge c ORDER BY c.createdDate DESC")
     List<Charge> findAllOrderByCreatedDateDesc();
 
+
+    @Query("SELECT c FROM Charge c WHERE c.checkNumber = :checkNumber ORDER BY c.createdDate DESC LIMIT 1")
+    Charge findLatestChargeByChecknumber(@Param("checkNumber") String checkNumber);
 }

@@ -1,5 +1,5 @@
 package com.example.Project.Management.bayport.common.enumerator;
 
 public enum RequestAction {
-    REGISTER, DECOMMISION, ACCEPT, REJECT
+    REGISTER, DECOMMISION, ACCEPT, REJECTED, APPROVED
 }

@@ -168,6 +168,11 @@ public class ChargeServiceImpl implements ChargeService {
         chargeRepository.deleteById(id);
     }
 
+    @Override
+    public Charge findLatestChargeByChecknumber(String checkNumber) {
+        return chargeRepository.findLatestChargeByChecknumber(checkNumber);
+    }
+
     private ChargeDto mapToDto(Charge charge) {
         return ChargeDto.builder()
                 .checkNumber(charge.getCheckNumber())
