@@ -2,6 +2,7 @@ package com.example.Project.Management.bayport.loan.dto.portal;
 
 import com.example.Project.Management.bayport.common.enumerator.LoanType;
 import com.example.Project.Management.bayport.common.enumerator.RequestType;
+import jakarta.persistence.Column;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -57,6 +58,8 @@ public class LoanDto {
     private String essApprovalReason;
     private String reason;
     private String disbursementDate;
+    private String initialApproveDate;
+    private String hroApproveDate;
 
     // Charge Response
     private BigDecimal totalInsurance;

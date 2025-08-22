@@ -462,6 +462,7 @@ public class LoanServiceImpl implements LoanService {
         RequestAction requestAction = RequestAction.valueOf(loanApprovalApiDto.getLoanApprovalApiDataDto().getMessageDetails().getApproval());
         try {
 
+            LocalDateTime now = LocalDateTime.now();
             Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
             if (fsp.isEmpty()) {
                 log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
@@ -480,6 +481,7 @@ public class LoanServiceImpl implements LoanService {
             } else {
                 loan.setRequestType(RequestType.hro_rejected);
             }
+//            loan.getHroApproveDate(now);
             loanRepository.save(loan);
             log.info("Loan Final Approval Success");
             return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
@@ -487,7 +489,6 @@ public class LoanServiceImpl implements LoanService {
         }catch (Exception e){
             log.info(e.getMessage());
             return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR,fspCode, mssId);
-
         }
     }
 
