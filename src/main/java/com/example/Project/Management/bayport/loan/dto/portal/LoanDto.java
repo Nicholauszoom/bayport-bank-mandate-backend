@@ -60,6 +60,9 @@ public class LoanDto {
     private String disbursementDate;
     private String initialApproveDate;
     private String hroApproveDate;
+    private String employeeCancellDate;
+    private String liquidationDate;
+    private String remark;
 
     // Charge Response
     private BigDecimal totalInsurance;

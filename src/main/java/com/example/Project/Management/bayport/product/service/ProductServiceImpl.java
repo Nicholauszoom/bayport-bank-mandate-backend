@@ -14,18 +14,23 @@ import com.example.Project.Management.bayport.product.entity.Product;
 import com.example.Project.Management.bayport.product.entity.ProductCondition;
 import com.example.Project.Management.bayport.product.repository.ProductConditionRepository;
 import com.example.Project.Management.bayport.product.repository.ProductRepository;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseApiDto;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseDetailApiDto;
 import com.example.Project.Management.bayport.util.ResponseCodes;
 import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -156,9 +161,7 @@ public class ProductServiceImpl implements ProductService {
 			product.setCurrencyName(productDto.getCurrency().name());
 			product.setFinancialServiceProvider(fsp);
 			product.setStatus(Status.REGISTERED);
-		    productRepository.save(product);
 
-			System.out.println("phase 0 *************: ");
 			List<ProductCondition> productConditionList = productConditionRepository.findAll();
 
 			List<ProductConditionApiReqDetailDto> productConditionApiReqDetailDtoList = new ArrayList<>();
@@ -216,14 +219,38 @@ public class ProductServiceImpl implements ProductService {
 			System.out.println("xml payload: " + xmlPayload);
 
 			ResponseEntity<String> resposneEntity = loanService.generateRequestSignatureCheck(xmlPayload);
+			log.info("Poduct Utumishi Response: {}", resposneEntity);
 
-		return resposneEntity;
+			ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(resposneEntity));
+
+			if (responseDetailApiDto.getResponseCode() == "8000") {
+				// Update product
+				productRepository.save(product);
+				return ResponseEntity.status(HttpStatus.OK).body("PRODUCT REGISTRATION SUCCESSFUL");
+			}else {
+				return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("PRODUCT REGISTRATION FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+			}
 
 		} catch (Exception e) {
 			log.info("fail to save product i.e with product code: " + e.getMessage());
-			return null;
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL");
 		}
 
+	}
+
+	public ResponseDetailApiDto getUtumishiApiResponse(String response) throws Exception {
+		log.info("Received Utumishi resposne: {}", response);
+		JAXBContext jaxbContext = JAXBContext.newInstance(ResponseApiDto.class);
+		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		StringReader stringReader = new StringReader(response);
+		ResponseApiDto responseApiDto = (ResponseApiDto) unmarshaller.unmarshal(stringReader);
+		try {
+			log.info("ResponseCode: {}", responseApiDto.getResponseDataDto().getResponseDetailDto().getResponseCode());
+			return responseApiDto.getResponseDataDto().getResponseDetailDto();
+		} catch (Exception e) {
+			log.info("Exception caught: {}", e.getMessage());
+			return null;
+		}
 	}
 
 	@Override

@@ -18,6 +18,8 @@ import com.example.Project.Management.bayport.fsp.services.FinancialServiceProvi
 import com.example.Project.Management.bayport.loan.entity.Loan;
 import com.example.Project.Management.bayport.loan.repository.LoanRepository;
 import com.example.Project.Management.bayport.loan.service.LoanService;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseApiDto;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseDetailApiDto;
 import com.example.Project.Management.bayport.util.ResponseCodes;
 import com.example.Project.Management.bayport.util.Utils;
 import jakarta.xml.bind.JAXBContext;
@@ -144,14 +146,61 @@ public class DisbursementServiceImpl implements DisbursementService {
 
             loan.setDisbursementDate(String.valueOf(now));
             loan.setRequestType(requestType);
-            loanRepository.save(loan);
-            return ResponseEntity.status(HttpStatus.OK).body("SUCCESS");
+
+            log.info("Disbursement Utumishi Response: {}", responseEntityDisburse);
+
+            ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(responseEntityDisburse));
+
+            if (responseDetailApiDto.getResponseCode() == "8000") {
+                // Update loan
+                loanRepository.save(loan);
+
+                return ResponseEntity.status(HttpStatus.OK).body("DISBURSEMENT SUCCESSFUL");
+            }else {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("DISBURSEMENT FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+            }
 
         } catch (Exception e) {
             log.info("fail to send disbursement to utumishi");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL");
         }
     }
+
+    public ResponseDetailApiDto getUtumishiApiResponse(String response) throws Exception {
+        log.info("Received Utumishi resposne: {}", response);
+        JAXBContext jaxbContext = JAXBContext.newInstance(ResponseApiDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(response);
+        ResponseApiDto responseApiDto = (ResponseApiDto) unmarshaller.unmarshal(stringReader);
+        try {
+            log.info("ResponseCode: {}", responseApiDto.getResponseDataDto().getResponseDetailDto().getResponseCode());
+            return responseApiDto.getResponseDataDto().getResponseDetailDto();
+        } catch (Exception e) {
+            log.info("Exception caught: {}", e.getMessage());
+            return null;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

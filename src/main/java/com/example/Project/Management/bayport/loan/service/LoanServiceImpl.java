@@ -27,6 +27,7 @@ import com.example.Project.Management.bayport.loan.dto.ess_notification_response
 import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.ResponsePayAcknPortalDto;
 import com.example.Project.Management.bayport.loan.dto.liquidization.LoanLiquidizationApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.liquidization.LoanLiquidizationApiReqDetailDto;
+import com.example.Project.Management.bayport.loan.dto.liquidization.portal.LiquidationDto;
 import com.example.Project.Management.bayport.loan.dto.payment_acknoledgement.PaymentAcknoledgeApiDataDto;
 import com.example.Project.Management.bayport.loan.dto.payment_acknoledgement.PaymentAcknoledgeApiDetailDto;
 import com.example.Project.Management.bayport.loan.dto.portal.LoanDto;
@@ -63,6 +64,8 @@ import com.example.Project.Management.bayport.loan.entity.LoanCancellation;
 import com.example.Project.Management.bayport.loan.repository.*;
 import com.example.Project.Management.bayport.product.entity.Product;
 import com.example.Project.Management.bayport.product.repository.ProductRepository;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseApiDto;
+import com.example.Project.Management.bayport.setup.dto.response.ResponseDetailApiDto;
 import com.example.Project.Management.bayport.status.repository.StatusRepository;
 import com.example.Project.Management.bayport.util.ResponseCodes;
 import com.example.Project.Management.bayport.util.StringUtil;
@@ -290,16 +293,6 @@ public class LoanServiceImpl implements LoanService {
                 .toList();
     }
 
-    @Override
-    public Optional<Loan> findById(long id) {
-        return loanRepository.findById(id);
-    }
-
-    @Override
-    public List<Loan> findLoanByRequestType(RequestType requestType) {
-        return loanRepository.findLoanByRequestType(requestType);
-    }
-
     private LoanDto mapToDto(Loan loan) {
         return LoanDto.builder()
                 .firstName(loan.getFirstName())
@@ -354,6 +347,7 @@ public class LoanServiceImpl implements LoanService {
             fsp = fspList.get(0);
         }
         try {
+            LocalDateTime now = LocalDateTime.now();
             Optional<Loan> loanOption = loanRepository.findById(id);
             if (loanOption.isEmpty()) {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loan Not Found , loanId: "+ id);
@@ -403,12 +397,23 @@ public class LoanServiceImpl implements LoanService {
             } else {
                 loan.setRequestType(RequestType.fsp_rejected);
             }
-            loanRepository.save(loan);
 
-            return responseEntity;
+            log.info("Initial Approve Utumishi Response: " + responseEntity);
+
+            ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(responseEntity));
+
+            if (responseDetailApiDto.getResponseCode() == "8000") {
+                // Update loan
+                loan.setInitialApproveDate(String.valueOf(now));
+                loanRepository.save(loan);
+                return ResponseEntity.status(HttpStatus.OK).body("INITIAL APPROVAL SUCCESSFUL");
+            } else {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("INITIAL APPROVAL FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+            }
 
         } catch (Exception e) {
-            return null;
+            log.info(" Exception occur when send initial approval:{}",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("INITIAL APPROVAL FAILED");
         }
     }
 
@@ -424,6 +429,7 @@ public class LoanServiceImpl implements LoanService {
         log.info("Received loan cancellation request: {}", message);
 
         try {
+            LocalDateTime now = LocalDateTime.now();
             Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
             if (fsp.isEmpty()) {
                 log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
@@ -438,6 +444,7 @@ public class LoanServiceImpl implements LoanService {
             Loan loan = loanOption.get();
             loan.setEssApprovalReason(loanCancellationApiDto.getLoanCancellationApiReqData().getMessageDetails().getReason());
             loan.setRequestType(RequestType.employee_rejected);
+            loan.setEmployeeCancellDate(String.valueOf(now));
             loanRepository.save(loan);
 
             log.info("Loan Cancellation Success");
@@ -481,7 +488,8 @@ public class LoanServiceImpl implements LoanService {
             } else {
                 loan.setRequestType(RequestType.hro_rejected);
             }
-//            loan.getHroApproveDate(now);
+
+            loan.setHroApproveDate(String.valueOf(now));
             loanRepository.save(loan);
             log.info("Loan Final Approval Success");
             return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
@@ -489,6 +497,145 @@ public class LoanServiceImpl implements LoanService {
         }catch (Exception e){
             log.info(e.getMessage());
             return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR,fspCode, mssId);
+        }
+    }
+
+    @Override
+    public Optional<Loan> findById(long id) {
+        return loanRepository.findById(id);
+    }
+
+    @Override
+    public List<Loan> findLoanByRequestType(RequestType requestType) {
+        return loanRepository.findLoanByRequestType(requestType);
+    }
+
+    @Override
+    public ResponseEntity<?> loanLiquidation(Long id, String remark) {
+        String mssId = generateMessageId();
+        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
+        FinancialServiceProvider fsp = null;
+        if (!fspList.isEmpty()) {
+            fsp = fspList.get(0);
+        }
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            Optional<Loan> loanOption = loanRepository.findById(id);
+            if (loanOption.isEmpty()) {
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body("Loan Not Found , loanId: "+ id);
+            }
+            Loan loan = loanOption.get();
+
+            LoanLiquidizationApiReqDetailDto loanLiquidizationApiReqDetailDto = new LoanLiquidizationApiReqDetailDto();
+            loanLiquidizationApiReqDetailDto.setApplicationNumber(loan.getApplicationNumber());
+            loanLiquidizationApiReqDetailDto.setLoanNumber(String.valueOf(loan.getId()));
+            loanLiquidizationApiReqDetailDto.setRemarks(remark);
+
+            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
+            apiReqHeaderDto.setFspCode(fsp.getFspCode());
+            apiReqHeaderDto.setMsgId(mssId);
+            apiReqHeaderDto.setMessageType(Constants.LOAN_LIQUIDATION_NOTIFICATION);
+            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDto.setSender(fsp.getFspName());
+
+            LoanLiquidizationApiReqDataDto loanLiquidizationApiReqDataDto = new LoanLiquidizationApiReqDataDto();
+            loanLiquidizationApiReqDataDto.setRequestHeader(apiReqHeaderDto);
+            loanLiquidizationApiReqDataDto.setLoanLiquidizationApiReqDetailDto(loanLiquidizationApiReqDetailDto);
+
+            JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanLiquidizationApiReqDataDto.class);
+            Marshaller marshaller = jaxbContext2.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriter = new StringWriter();
+            marshaller.marshal(loanLiquidizationApiReqDataDto, stringWriter);
+            String xmlPayload = stringWriter.toString();
+
+            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
+
+            log.info("Liquidation Utumishi Response: " + responseEntity);
+
+            ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(responseEntity));
+
+            if (responseDetailApiDto.getResponseCode() == "8000") {
+                // Update loan
+                loan.setRequestType(RequestType.loan_liquidated);
+                loan.setLiquidationRemark(remark);
+                loan.setLiquidationDate(String.valueOf(now));
+                Loan saveResponse = loanRepository.save(loan);
+                log.info("loan save resposne : {}", saveResponse);
+
+                return ResponseEntity.status(HttpStatus.OK).body("LIQUIDATION SUCCESSFUL");
+            }else {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("LIQUIDATION FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+            }
+        } catch (Exception e) {
+            log.info("Liquidation failed with :{}",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("LIQUIDATION FAILED");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> liquidation(LiquidationDto liquidationDto) {
+        String mssId = generateMessageId();
+        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
+        FinancialServiceProvider fsp = null;
+        if (!fspList.isEmpty()) {
+            fsp = fspList.get(0);
+        }
+        try {
+            LoanLiquidizationApiReqDetailDto loanLiquidizationApiReqDetailDto = new LoanLiquidizationApiReqDetailDto();
+            loanLiquidizationApiReqDetailDto.setApplicationNumber(liquidationDto.getApplicationNumber());
+            loanLiquidizationApiReqDetailDto.setLoanNumber(liquidationDto.getLoanNumber());
+            loanLiquidizationApiReqDetailDto.setRemarks(liquidationDto.getRemarks());
+
+            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
+            apiReqHeaderDto.setFspCode(fsp.getFspCode());
+            apiReqHeaderDto.setMsgId(mssId);
+            apiReqHeaderDto.setMessageType(Constants.LOAN_LIQUIDATION_NOTIFICATION);
+            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDto.setSender(fsp.getFspName());
+
+            LoanLiquidizationApiReqDataDto loanLiquidizationApiReqDataDto = new LoanLiquidizationApiReqDataDto();
+            loanLiquidizationApiReqDataDto.setRequestHeader(apiReqHeaderDto);
+            loanLiquidizationApiReqDataDto.setLoanLiquidizationApiReqDetailDto(loanLiquidizationApiReqDetailDto);
+
+            JAXBContext jaxbContext2 = JAXBContext.newInstance(LoanLiquidizationApiReqDataDto.class);
+            Marshaller marshaller = jaxbContext2.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriter = new StringWriter();
+            marshaller.marshal(loanLiquidizationApiReqDataDto, stringWriter);
+            String xmlPayload = stringWriter.toString();
+
+            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
+
+            log.info("Liquidation Utumishi Response: " + responseEntity);
+
+            ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(responseEntity));
+
+            if (responseDetailApiDto.getResponseCode() == "8000") {
+
+                return ResponseEntity.status(HttpStatus.OK).body("LIQUIDATION SUCCESSFUL");
+            }else {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("LIQUIDATION FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+            }
+        } catch (Exception e) {
+            log.info("Liquidation failed with :{}",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("LIQUIDATION FAILED");
+        }
+    }
+
+    public ResponseDetailApiDto getUtumishiApiResponse(String response) throws Exception {
+
+        log.info("Received Utumishi resposne: {}", response);
+        JAXBContext jaxbContext = JAXBContext.newInstance(ResponseApiDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(response);
+        ResponseApiDto responseApiDto = (ResponseApiDto) unmarshaller.unmarshal(stringReader);
+        try {
+            log.info("ResponseCode: {}", responseApiDto.getResponseDataDto().getResponseDetailDto().getResponseCode());
+            return responseApiDto.getResponseDataDto().getResponseDetailDto();
+        } catch (Exception e) {
+            log.info("Exception caught: {}", e.getMessage());
+            return null;
         }
     }
 

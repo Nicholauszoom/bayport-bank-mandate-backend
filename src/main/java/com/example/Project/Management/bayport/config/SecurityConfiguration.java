@@ -89,7 +89,7 @@ public class SecurityConfiguration {
 //        CorsConfiguration configuration = new CorsConfiguration();
 //
 //        // Add more potential origins
-//        configuration.setAllowedOrigins(List.of(
+//        coniguration.setAllowedOrigins(List.of(
 //                "http://10.25.32.30:8083",
 //                "http://localhost:8083",
 //                "http://127.0.0.1:8083"
