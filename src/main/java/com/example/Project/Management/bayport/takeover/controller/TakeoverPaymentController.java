@@ -1,7 +1,5 @@
 package com.example.Project.Management.bayport.takeover.controller;
 
-import com.example.Project.Management.bayport.common.enumerator.PaymentStatus;
-import com.example.Project.Management.bayport.common.enumerator.RequestAction;
 import com.example.Project.Management.bayport.common.enumerator.RequestType;
 import com.example.Project.Management.bayport.loan.service.LoanService;
 import com.example.Project.Management.bayport.takeover.dto.TakeoverPaymentDto;
