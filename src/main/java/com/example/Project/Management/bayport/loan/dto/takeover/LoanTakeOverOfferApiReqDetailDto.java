@@ -43,7 +43,6 @@ public class LoanTakeOverOfferApiReqDetailDto {
     @XmlElement(name = "DesignationCode")
     private String designationCode;
 
-
     @XmlElement(name = "DesignationName")
     private String designationName;
 
@@ -58,7 +57,6 @@ public class LoanTakeOverOfferApiReqDetailDto {
 
     @XmlElement(name = "DeductibleAmount")
     private BigDecimal DeductibleAmount = new BigDecimal("0.00");
-
 
     @XmlElement(name = "RetirementDate")
     private int retirementDate;
@@ -122,8 +120,4 @@ public class LoanTakeOverOfferApiReqDetailDto {
 
     @XmlElement(name = "ApplicationNumber")
     private String applicationNumber;
-
-
-
-
 }

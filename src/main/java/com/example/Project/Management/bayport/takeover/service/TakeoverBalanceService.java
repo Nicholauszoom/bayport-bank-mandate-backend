@@ -1,9 +1,15 @@
 package com.example.Project.Management.bayport.takeover.service;
 
+import com.example.Project.Management.bayport.takeover.dto.TakeoverBalanceDto;
+import com.example.Project.Management.bayport.takeover.entity.Takeoverbalance;
 
-import com.example.Project.Management.bayport.takeover.entity.Takeoverbal;
+import java.util.List;
+import java.util.Optional;
 
 public interface TakeoverBalanceService {
+    List<Takeoverbalance> findAll();
 
-    void save(Takeoverbal takeoverBalance);
+    List<Takeoverbalance> searchTakeoverBalance(String term);
+
+    Optional<Takeoverbalance> findById(long id);
 }

@@ -33,7 +33,7 @@ public class ChargeController {
     public ResponseEntity<String> uploadPriceScheduleExcel(@RequestParam("file") MultipartFile file) throws Exception {
         try {
             priceClientRvService.savePriceScheduleFromExcel(file);
-            return ResponseEntity.ok("Price schedule uploaded successfully");
+            return ResponseEntity.status(HttpStatus.OK).body("Price schedule uploaded successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
@@ -43,7 +43,7 @@ public class ChargeController {
     public ResponseEntity<String> uploadClientRvExcel(@RequestParam("file") MultipartFile file) throws Exception {
         try {
             priceClientRvService.saveClientRvFromExcel(file);
-            return ResponseEntity.ok("Client Rv uploaded successfully");
+            return ResponseEntity.status(HttpStatus.OK).body("Client Rv uploaded successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }

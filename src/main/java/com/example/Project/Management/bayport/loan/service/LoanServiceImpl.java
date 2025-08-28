@@ -3,11 +3,16 @@ package com.example.Project.Management.bayport.loan.service;
 import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
 import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDto;
 import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.balance.entity.Balance;
+import com.example.Project.Management.bayport.balance.repository.BalanceRepository;
 import com.example.Project.Management.bayport.charge.entity.Charge;
+import com.example.Project.Management.bayport.charge.entity.ClientRv;
 import com.example.Project.Management.bayport.charge.repository.ChargeRepository;
+import com.example.Project.Management.bayport.charge.repository.ClientRvRepository;
 import com.example.Project.Management.bayport.common.Constants;
 import com.example.Project.Management.bayport.common.DigitalSignature;
 import com.example.Project.Management.bayport.common.enumerator.LoanType;
+import com.example.Project.Management.bayport.common.enumerator.PaymentStatus;
 import com.example.Project.Management.bayport.common.enumerator.RequestAction;
 import com.example.Project.Management.bayport.common.enumerator.RequestType;
 import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
@@ -15,16 +20,7 @@ import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceP
 import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDataDto;
 import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDetailDto;
 import com.example.Project.Management.bayport.loan.dto.approval.LoanApprovalApiDto;
-import com.example.Project.Management.bayport.loan.dto.approval.loan_utumishi_final_response.LoanFinalResponseApiDataDto;
-import com.example.Project.Management.bayport.loan.dto.approval.loan_utumishi_final_response.LoanFinalResponseApiDto;
 import com.example.Project.Management.bayport.loan.dto.cancellation.LoanCancellationApiDto;
-import com.example.Project.Management.bayport.loan.dto.cancellation.LoanCancellationApiReqDataDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssNotificationApiRespDataDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssRequestLoanInitialApprovePortalDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.EssResponseLoanInitialApprovePortalDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.PaymentNotfRespDataDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.RequestPaymentAcknPortalDto;
-import com.example.Project.Management.bayport.loan.dto.ess_notification_response.payment_acknlg_notification.ResponsePayAcknPortalDto;
 import com.example.Project.Management.bayport.loan.dto.liquidization.LoanLiquidizationApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.liquidization.LoanLiquidizationApiReqDetailDto;
 import com.example.Project.Management.bayport.loan.dto.liquidization.portal.LiquidationDto;
@@ -45,9 +41,9 @@ import com.example.Project.Management.bayport.loan.dto.restructure.rejection.Res
 import com.example.Project.Management.bayport.loan.dto.restructure.rejection.RestructureRejectApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.restructure.restructure.RestructureApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.restructure.restructure.RestructureApiReqDto;
-import com.example.Project.Management.bayport.loan.dto.takeover.payment_notification.PaymentNotificationApiReqDataDto;
+import com.example.Project.Management.bayport.loan.dto.takeover.payment_notification.PaymentNotificationApiReqDetailDto;
 import com.example.Project.Management.bayport.loan.dto.takeover.payment_notification.PaymentNotificationApiReqDto;
-import com.example.Project.Management.bayport.loan.dto.takeover.take_over_balance.TakeOverBalanceApiReqDataDto;
+import com.example.Project.Management.bayport.loan.dto.takeover.take_over_balance.TakeOverBalanceApiReqDetailDto;
 import com.example.Project.Management.bayport.loan.dto.takeover.take_over_balance.TakeOverBalanceApiReqDto;
 import com.example.Project.Management.bayport.loan.dto.takeover.take_over_balance.response.TakeOverBalanceApiRespDataDto;
 import com.example.Project.Management.bayport.loan.dto.takeover.take_over_balance.response.TakeOverBalanceApiRespDetailDto;
@@ -56,6 +52,7 @@ import com.example.Project.Management.bayport.loan.dto.takeover.take_over_loan.T
 import com.example.Project.Management.bayport.loan.dto.topup.LoanTopUpApiReqDataDto;
 import com.example.Project.Management.bayport.loan.dto.topup.LoanTopUpApiReqDto;
 import com.example.Project.Management.bayport.loan.dto.topup.balance.request.LoanTopUpBalancApiReqDataDto;
+import com.example.Project.Management.bayport.loan.dto.topup.balance.request.LoanTopUpBalanceApiReqDetailDto;
 import com.example.Project.Management.bayport.loan.dto.topup.balance.request.LoanTopUpBalanceApiReqDto;
 import com.example.Project.Management.bayport.loan.dto.topup.balance.response.LoanTopUpBalanceApiRespDataDto;
 import com.example.Project.Management.bayport.loan.dto.topup.balance.response.LoanTopUpPayOffBalanceApiRespDetailDto;
@@ -67,6 +64,11 @@ import com.example.Project.Management.bayport.product.repository.ProductReposito
 import com.example.Project.Management.bayport.setup.dto.response.ResponseApiDto;
 import com.example.Project.Management.bayport.setup.dto.response.ResponseDetailApiDto;
 import com.example.Project.Management.bayport.status.repository.StatusRepository;
+import com.example.Project.Management.bayport.takeover.dto.portal.PaymentAcknoledgeDto;
+import com.example.Project.Management.bayport.takeover.entity.Takeoverbalance;
+import com.example.Project.Management.bayport.takeover.entity.Takeoverpayment;
+import com.example.Project.Management.bayport.takeover.repository.TakeoverBalanceRepository;
+import com.example.Project.Management.bayport.takeover.repository.TakeoverPaymentRepository;
 import com.example.Project.Management.bayport.util.ResponseCodes;
 import com.example.Project.Management.bayport.util.StringUtil;
 import com.example.Project.Management.bayport.util.Utils;
@@ -91,9 +93,9 @@ import java.security.SignatureException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-//import java.util.logging.Logger;
 
 @Service
 @Slf4j
@@ -148,10 +150,20 @@ public class LoanServiceImpl implements LoanService {
     private ProductRepository productRepository;
 
     private final ChargeRepository chargeRepository;
+
+    private final ClientRvRepository clientRvRepository;
+
+    private final BalanceRepository balanceRepository;
+
+    private final TakeoverBalanceRepository  takeoverBalanceRepository;
+
+    private final TakeoverPaymentRepository takeoverPaymentRepository;
+
+//    private final Balance
     
     public LoanServiceImpl(
             Utils utils, DigitalSignature digitalSignature, LoanRepository loanRepository,
-            ProductRepository productRepository, FinancialServiceProviderRepository financialServiceProviderRepository, StatusRepository statusRepository, StringUtil stringUtil, ChargeRepository chargeRepository) {
+            ProductRepository productRepository, FinancialServiceProviderRepository financialServiceProviderRepository, StatusRepository statusRepository, StringUtil stringUtil, ChargeRepository chargeRepository, ClientRvRepository clientRvRepository, BalanceRepository balanceRepository, TakeoverBalanceRepository takeoverBalanceRepository, TakeoverPaymentRepository takeoverPaymentRepository) {
         this.utils = utils;
         this.digitalSignature = digitalSignature;
         this.loanRepository = loanRepository;
@@ -160,6 +172,10 @@ public class LoanServiceImpl implements LoanService {
         this.financialServiceProviderRepository =financialServiceProviderRepository;
         this.statusRepository =statusRepository;
         this.stringUtil = stringUtil;
+        this.clientRvRepository = clientRvRepository;
+        this.balanceRepository = balanceRepository;
+        this.takeoverBalanceRepository = takeoverBalanceRepository;
+        this.takeoverPaymentRepository = takeoverPaymentRepository;
     }
     
     @Override
@@ -623,8 +639,143 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
-    public ResponseDetailApiDto getUtumishiApiResponse(String response) throws Exception {
 
+    @Override
+    public ResponseEntity<String> loanTopUpPayOffBalance(String message) throws Exception {
+        log.info("Received loan TopUp pay off balance request: {}", message);
+        JAXBContext jaxbContext = JAXBContext.newInstance(LoanTopUpBalanceApiReqDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(message);
+        LoanTopUpBalanceApiReqDto loanTopUpBalanceApiReqDto = (LoanTopUpBalanceApiReqDto) unmarshaller.unmarshal(stringReader);
+        String fspCode = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getRequestHeader().getFspCode();
+        String mssId = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getRequestHeader().getMsgId();
+        String loanNumber = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getLoanTopUpBalanceApiReqDetailDto().getLoanNumber();
+        String checkNumber = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getLoanTopUpBalanceApiReqDetailDto().getCheckNumber();
+        LoanTopUpBalanceApiReqDetailDto loanTopUpBalanceApiReqDetailDto = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getLoanTopUpBalanceApiReqDetailDto();
+        try {
+            JAXBContext jaxbContextReq = JAXBContext.newInstance(LoanTopUpBalancApiReqDataDto.class);
+            Marshaller marshallerRq = jaxbContextReq.createMarshaller();
+            marshallerRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriterRq = new StringWriter();
+            marshallerRq.marshal(loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto(), stringWriterRq);
+            String balanceUtumishiRq = stringWriterRq.toString();
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime after7Days = now.plusDays(7);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            String after7DaysFormated = after7Days.format(formatter);
+
+            log.info("loan charges response is successfull i.e Product Code: {}", balanceUtumishiRq);
+
+            Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
+
+            if(fspByCode.isEmpty()) {
+                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER, fspCode, mssId);
+            }
+
+            ClientRv client = clientRvRepository.findByCheckNumber(checkNumber);
+            if(client == null) {
+                return createResponseEntity(ResponseCodes.CHECK_NUMBER_NOT_EXIST, fspCode, mssId);
+            }
+
+            String lastDeductionDate = client.getLastDeductionDate();
+            String loanEndDate =  client.getLoanEndDate();
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+
+            ZonedDateTime zonedLastDeductionDateTime = ZonedDateTime.parse(lastDeductionDate, inputFormatter);
+            LocalDateTime formattedlastDeductionDate = zonedLastDeductionDateTime.toLocalDateTime();
+
+            ZonedDateTime zonedLoanEndDateDateTime = ZonedDateTime.parse(loanEndDate, inputFormatter);
+            LocalDateTime formattedLoanEndDateDate = zonedLoanEndDateDateTime.toLocalDateTime();
+
+            LoanTopUpPayOffBalanceApiRespDetailDto loanTopUpPayOffBalanceApiRespDetailDto = new LoanTopUpPayOffBalanceApiRespDetailDto();
+            loanTopUpPayOffBalanceApiRespDetailDto.setLoanNumber(loanNumber);
+            loanTopUpPayOffBalanceApiRespDetailDto.setFSPReferenceNumber(client.getFspReferenceNumber());
+            loanTopUpPayOffBalanceApiRespDetailDto.setPaymentReferenceNumber(client.getPaymentReferenceNumber());
+            loanTopUpPayOffBalanceApiRespDetailDto.setTotalPayoffAmount(client.getTotalPayoffAmount());
+            loanTopUpPayOffBalanceApiRespDetailDto.setOutstandingBalance(client.getTotalOutstandingBalance());
+            loanTopUpPayOffBalanceApiRespDetailDto.setFinalPaymentDate(after7DaysFormated);
+            loanTopUpPayOffBalanceApiRespDetailDto.setLastDeductionDate(formattedlastDeductionDate.toString());
+            loanTopUpPayOffBalanceApiRespDetailDto.setLastPayDate(after7DaysFormated);
+            loanTopUpPayOffBalanceApiRespDetailDto.setEndDate(formattedLoanEndDateDate.toString());
+
+            ApiReqHeaderDto apiReqHeaderDtoCC = new ApiReqHeaderDto();
+            apiReqHeaderDtoCC.setFspCode(fspByCode.get().getFspCode());
+            apiReqHeaderDtoCC.setMsgId(mssId);
+            apiReqHeaderDtoCC.setMessageType(Constants.LOAN_TOP_UP_BALANCE_RESPONSE);
+            apiReqHeaderDtoCC.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDtoCC.setSender(fspByCode.get().getFspName());
+
+            LoanTopUpBalanceApiRespDataDto loanTopUpBalanceApiRespDataDto = new LoanTopUpBalanceApiRespDataDto();
+            loanTopUpBalanceApiRespDataDto.setRequestHeader(apiReqHeaderDtoCC);
+            loanTopUpBalanceApiRespDataDto.setLoanTopUpBalanceApiRespDetailDto(loanTopUpPayOffBalanceApiRespDetailDto);
+            log.info("balance json payload: {}", loanTopUpPayOffBalanceApiRespDetailDto);
+
+            JAXBContext jaxbContext2CC = JAXBContext.newInstance(LoanTopUpBalanceApiRespDataDto.class);
+            Marshaller marshallerCC = jaxbContext2CC.createMarshaller();
+            marshallerCC.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriterCC = new StringWriter();
+            marshallerCC.marshal(loanTopUpBalanceApiRespDataDto, stringWriterCC);
+            String xmlPayloadCC = stringWriterCC.toString();
+            log.info("balance catalog i.e with fsp code: {}" ,xmlPayloadCC);
+
+            JAXBContext jaxbContextSg = JAXBContext.newInstance(GenericApiReqDataDto.class);
+            Unmarshaller unmarshallerSg = jaxbContextSg.createUnmarshaller();
+            StringReader stringReaderSg = new StringReader(xmlPayloadCC);
+            GenericApiReqDataDto genericApiReqDataDtoSg = (GenericApiReqDataDto) unmarshallerSg.unmarshal(stringReaderSg);
+            String content = convertObjectToXml(genericApiReqDataDtoSg);
+
+            String signatureSg = digitalSignature.createSignature(content);
+            String finalXml = appendSignatureToXml2(content, signatureSg);
+
+            // save balance
+            saveTopupBalance(loanTopUpBalanceApiReqDetailDto, loanTopUpPayOffBalanceApiRespDetailDto);
+            log.info("loan top up balance successfull :{}", finalXml);
+            return ResponseEntity.ok(finalXml);
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            log.info("Exception occurred while processing loan top up pay off balance request {}");
+            return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+        }
+    }
+
+    public void saveTopupBalance(LoanTopUpBalanceApiReqDetailDto loanTopUpBalanceApiReqDetailDto, LoanTopUpPayOffBalanceApiRespDetailDto loanTopUpPayOffBalanceApiRespDetailDto) {
+
+        try {
+
+            Balance balance = Balance.builder()
+                    .checkNumber(loanTopUpBalanceApiReqDetailDto.getCheckNumber())
+                    .loanNumber(loanTopUpBalanceApiReqDetailDto.getLoanNumber())
+                    .firstName(loanTopUpBalanceApiReqDetailDto.getFirstName())
+                    .lastName(loanTopUpBalanceApiReqDetailDto.getLastName())
+                    .middleName(loanTopUpBalanceApiReqDetailDto.getMiddleName())
+                    .voteCode(loanTopUpBalanceApiReqDetailDto.getVoteCode())
+                    .voteName(loanTopUpBalanceApiReqDetailDto.getVoteName())
+                    .deductionAmount(loanTopUpBalanceApiReqDetailDto.getDeductionAmount())
+                    .deductionBalance(loanTopUpBalanceApiReqDetailDto.getDeductionBalance())
+                    .paymentOption(loanTopUpBalanceApiReqDetailDto.getPaymentOption())
+                    .fSPReferenceNumber(loanTopUpPayOffBalanceApiRespDetailDto.getFSPReferenceNumber())
+                    .paymentReferenceNumber(loanTopUpPayOffBalanceApiRespDetailDto.getPaymentReferenceNumber())
+                    .totalPayoffAmount(loanTopUpPayOffBalanceApiRespDetailDto.getTotalPayoffAmount())
+                    .outstandingBalance(loanTopUpPayOffBalanceApiRespDetailDto.getOutstandingBalance())
+                    .finalPaymentDate(loanTopUpPayOffBalanceApiRespDetailDto.getFinalPaymentDate())
+                    .lastDeductionDate(loanTopUpPayOffBalanceApiRespDetailDto.getLastDeductionDate())
+                    .lastPayDate(loanTopUpPayOffBalanceApiRespDetailDto.getLastPayDate())
+                    .endDate(loanTopUpPayOffBalanceApiRespDetailDto.getEndDate())
+                    .loanType(LoanType.TOPUP)
+                    .build();
+
+            balanceRepository.save(balance);
+
+            log.info("balance json payload: {}", balance);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
+    }
+
+    public ResponseDetailApiDto getUtumishiApiResponse(String response) throws Exception {
         log.info("Received Utumishi resposne: {}", response);
         JAXBContext jaxbContext = JAXBContext.newInstance(ResponseApiDto.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -639,10 +790,262 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
+    @Override
+    public ResponseEntity<String> loanTakeOverBalance(String message) throws Exception {
+        log.info("Received Take_Over balance request: {}", message);
+        JAXBContext jaxbContext = JAXBContext.newInstance(TakeOverBalanceApiReqDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(message);
+        TakeOverBalanceApiReqDto takeOverBalanceApiReqDto = (TakeOverBalanceApiReqDto) unmarshaller.unmarshal(stringReader);
+        String fspCode = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getRequestHeader().getFspCode();
+        String mssId = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getRequestHeader().getMsgId();
+        String checkNumber = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getTakeOverBalanceApiReqDetailDto().getCheckNumber();
+        String loanNumber = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getTakeOverBalanceApiReqDetailDto().getLoanNumber();
+        TakeOverBalanceApiReqDetailDto takeOverBalanceApiReqDetailDto = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getTakeOverBalanceApiReqDetailDto();
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime after7Days = now.plusDays(7);
 
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            String after7DaysFormated = after7Days.format(formatter);
 
+            Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
 
+            ClientRv client = clientRvRepository.findByCheckNumber(checkNumber);
+            if(client == null) {
+                return createResponseEntity(ResponseCodes.CHECK_NUMBER_NOT_EXIST, fspCode, mssId);
+            }
+            String lastDeductionDate = client.getLastDeductionDate();
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
 
+            ZonedDateTime zonedLastDeductionDateTime = ZonedDateTime.parse(lastDeductionDate, inputFormatter);
+            LocalDateTime formattedlastDeductionDate = zonedLastDeductionDateTime.toLocalDateTime();
+
+            TakeOverBalanceApiRespDetailDto takeOverBalanceApiRespDetailDto = new TakeOverBalanceApiRespDetailDto();
+            takeOverBalanceApiRespDetailDto.setLoanNumber(loanNumber);
+            takeOverBalanceApiRespDetailDto.setFspCode(fspCode);
+            takeOverBalanceApiRespDetailDto.setFSPReferenceNumber(client.getFspReferenceNumber());
+            takeOverBalanceApiRespDetailDto.setPaymentReferenceNumber(client.getPaymentReferenceNumber());
+            takeOverBalanceApiRespDetailDto.setTotalPayoffAmount(client.getTotalPayoffAmount());
+            takeOverBalanceApiRespDetailDto.setOutstandingBalance(client.getTotalOutstandingBalance());
+            takeOverBalanceApiRespDetailDto.setFspBankAccount("BAYPORT ACCOUNT");
+            takeOverBalanceApiRespDetailDto.setFspBankAccountName("BAYPORT FIANNACIAL SERVICE");
+            takeOverBalanceApiRespDetailDto.setSwiftCode(client.getLoanNumber());
+            takeOverBalanceApiRespDetailDto.setMnoChannels("0786329768");
+            takeOverBalanceApiRespDetailDto.setFinalPaymentDate(after7DaysFormated);
+            takeOverBalanceApiRespDetailDto.setLastDeductionDate(formattedlastDeductionDate.toString());
+            takeOverBalanceApiRespDetailDto.setDeductionEndDate(formattedlastDeductionDate.toString());
+
+            ApiReqHeaderDto apiReqHeaderDtoCC = new ApiReqHeaderDto();
+            apiReqHeaderDtoCC.setFspCode(fspByCode.get().getFspCode());
+            apiReqHeaderDtoCC.setMsgId(mssId);
+            apiReqHeaderDtoCC.setMessageType(Constants.LOAN_TAKEOVER_BALANCE_RESPONSE);
+            apiReqHeaderDtoCC.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDtoCC.setSender(fspByCode.get().getFspName());
+
+            TakeOverBalanceApiRespDataDto takeOverBalanceApiRespDataDto = new TakeOverBalanceApiRespDataDto();
+            takeOverBalanceApiRespDataDto.setRequestHeader(apiReqHeaderDtoCC);
+            takeOverBalanceApiRespDataDto.setTakeOverBalanceApiRespDetailDto(takeOverBalanceApiRespDetailDto);
+            log.info("takeover balance json payload:{}", takeOverBalanceApiRespDetailDto);
+
+            JAXBContext jaxbContext2CC = JAXBContext.newInstance(TakeOverBalanceApiRespDto.class);
+            Marshaller marshallerCC = jaxbContext2CC.createMarshaller();
+            marshallerCC.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriterCC = new StringWriter();
+            marshallerCC.marshal(takeOverBalanceApiRespDataDto, stringWriterCC);
+            String xmlPayloadCC = stringWriterCC.toString();
+            log.info("takeover balance catalog i.e with fsp code:{}", xmlPayloadCC);
+
+            JAXBContext jaxbContextSg = JAXBContext.newInstance(GenericApiReqDataDto.class);
+            Unmarshaller unmarshallerSg = jaxbContextSg.createUnmarshaller();
+            StringReader stringReaderSg = new StringReader(xmlPayloadCC);
+            GenericApiReqDataDto genericApiReqDataDtoSg = (GenericApiReqDataDto) unmarshallerSg.unmarshal(stringReaderSg);
+
+            String content = convertObjectToXml(genericApiReqDataDtoSg);
+
+            String signatureSg = digitalSignature.createSignature(content);
+
+            String finalXml = appendSignatureToXml2(content, signatureSg);
+            log.info("Final Xml Request :{}", finalXml);
+
+            // save balance
+            saveTakeOverBalance(takeOverBalanceApiReqDetailDto, takeOverBalanceApiRespDetailDto);
+            return ResponseEntity.ok(finalXml);
+
+        } catch (Exception e) {
+            log.info("Exception occurred while processing take over balance request :{}", e.getMessage());
+            return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+        }
+    }
+
+    public void saveTakeOverBalance(TakeOverBalanceApiReqDetailDto takeOverBalanceApiReqDetailDto, TakeOverBalanceApiRespDetailDto takeOverBalanceApiRespDetailDto) {
+        try {
+            Takeoverbalance balance = Takeoverbalance.builder()
+                    .checkNumber(takeOverBalanceApiReqDetailDto.getCheckNumber())
+                    .loanNumber(takeOverBalanceApiReqDetailDto.getLoanNumber())
+                    .fspCode(takeOverBalanceApiRespDetailDto.getFspCode())
+                    .firstName(takeOverBalanceApiReqDetailDto.getFirstName())
+                    .lastName(takeOverBalanceApiReqDetailDto.getLastName())
+                    .middleName(takeOverBalanceApiReqDetailDto.getMiddleName())
+                    .voteCode(takeOverBalanceApiReqDetailDto.getVoteCode())
+                    .voteName(takeOverBalanceApiReqDetailDto.getVoteName())
+                    .deductionAmount(takeOverBalanceApiReqDetailDto.getDeductionAmount())
+                    .deductionAmount(takeOverBalanceApiReqDetailDto.getDeductionAmount())
+                    .deductionCode(takeOverBalanceApiReqDetailDto.getDeductionCode())
+                    .deductionBalance(takeOverBalanceApiReqDetailDto.getDeductionBalance())
+                    .paymentOption(takeOverBalanceApiReqDetailDto.getPaymentOption())
+                    .fSPReferenceNumber(takeOverBalanceApiRespDetailDto.getFSPReferenceNumber())
+                    .paymentReferenceNumber(takeOverBalanceApiRespDetailDto.getPaymentReferenceNumber())
+                    .totalPayoffAmount(takeOverBalanceApiRespDetailDto.getTotalPayoffAmount())
+                    .outstandingBalance(takeOverBalanceApiRespDetailDto.getOutstandingBalance())
+                    .fspBankAccount(takeOverBalanceApiRespDetailDto.getFspBankAccount())
+                    .fspBankAccountName(takeOverBalanceApiRespDetailDto.getFspBankAccountName())
+                    .swiftCode(takeOverBalanceApiRespDetailDto.getSwiftCode())
+                    .mnoChannels(takeOverBalanceApiRespDetailDto.getMnoChannels())
+                    .finalPaymentDate(takeOverBalanceApiRespDetailDto.getFinalPaymentDate())
+                    .lastDeductionDate(takeOverBalanceApiRespDetailDto.getLastDeductionDate())
+                    .deductionEndDate(takeOverBalanceApiRespDetailDto.getDeductionEndDate())
+                    .build();
+
+            takeoverBalanceRepository.save(balance);
+
+            log.info("takeover balance json payload: {}", balance);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> takeOverPaymentNotification(String message) throws Exception {
+        log.info("Received take over payment Notification request: {}", message);
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(PaymentNotificationApiReqDto.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        StringReader stringReader = new StringReader(message);
+        PaymentNotificationApiReqDto paymentNotificationApiReqDto = (PaymentNotificationApiReqDto) unmarshaller.unmarshal(stringReader);
+        String fspCode = paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getRequestHeader().getFspCode();
+        String mssId = paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getRequestHeader().getMsgId();
+        String loanNumber = paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getPaymentNotificationApiReqDetailDto().getLoanNumber();
+        PaymentNotificationApiReqDetailDto paymentNotificationApiReqDetailDto =  paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getPaymentNotificationApiReqDetailDto();
+        try {
+
+            //loan pay off operation
+            Optional<FinancialServiceProvider> fsp =
+                    financialServiceProviderRepository.findByFspCode(fspCode);
+
+            if (fsp.isEmpty()) {
+                log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
+                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER, fspCode, mssId);
+            }
+
+            Takeoverbalance takeoverbalance = takeoverBalanceRepository.findLatestBalanceByLoannumber(loanNumber);
+            if (takeoverbalance == null) {
+                log.info("No takeover balance found with loannumber: {}", loanNumber);
+                return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
+            }
+
+            saveTakeoverPayment(paymentNotificationApiReqDetailDto, takeoverbalance);
+
+            log.info("response is successfull");
+            return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR, fspCode, mssId);
+        }
+    }
+
+    public void saveTakeoverPayment(PaymentNotificationApiReqDetailDto paymentNotificationApiReqDetailDto, Takeoverbalance takeoverbalance) {
+        try {
+            Takeoverpayment takeoverpayment = Takeoverpayment.builder()
+                    .applicationNumber(paymentNotificationApiReqDetailDto.getApplicationNumber())
+                    .loanNumber(paymentNotificationApiReqDetailDto.getLoanNumber())
+                    .reason(paymentNotificationApiReqDetailDto.getReason())
+                    .fspReferenceNumber(paymentNotificationApiReqDetailDto.getFspReferenceNumber())
+                    .paymentReferenceNumber(paymentNotificationApiReqDetailDto.getPaymentReferenceNumber())
+                    .totalPayoffAmount(paymentNotificationApiReqDetailDto.getTotalPayoffAmount())
+                    .paymentDate(paymentNotificationApiReqDetailDto.getPaymentDate())
+                    .paymentAdvice(paymentNotificationApiReqDetailDto.getPaymentAdvice())
+                    .paymentAdviceAttachment(paymentNotificationApiReqDetailDto.getPaymentAdviceAttachment())
+                    .takeoverBalanceId(takeoverbalance.getId())
+                    .requestType(RequestType.takeover_payment)
+                    .build();
+
+            takeoverPaymentRepository.save(takeoverpayment);
+
+            log.info("takeover payment successful saved: {}", takeoverpayment);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> paymentAcknoledgementNotification(Long paymentId, PaymentAcknoledgeDto paymentAcknoledgeDto) throws Exception {
+        String mssId = generateMessageId();
+        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
+        FinancialServiceProvider fsp = null;
+        if (!fspList.isEmpty()) {
+            fsp = fspList.get(0);
+        }
+        try {
+            Optional<Takeoverpayment> takeoverpaymentOpt = takeoverPaymentRepository.findById(paymentId);
+            if (takeoverpaymentOpt.isEmpty()) {
+                log.info("no takeover payment found with id: {}", paymentId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No takeover payment with id: " + paymentId);
+            }
+            Takeoverpayment takeoverpayment = takeoverpaymentOpt.get();
+
+            PaymentAcknoledgeApiDetailDto paymentAcknoledgeApiDetailDto = new PaymentAcknoledgeApiDetailDto();
+            paymentAcknoledgeApiDetailDto.setApplicationNumber(takeoverpayment.getApplicationNumber());
+            paymentAcknoledgeApiDetailDto.setRemarks(paymentAcknoledgeDto.getRemarks());
+            paymentAcknoledgeApiDetailDto.setLoanNumber(takeoverpayment.getLoanNumber());
+            paymentAcknoledgeApiDetailDto.setPaymentStatus(paymentAcknoledgeDto.getPaymentStatus().name());
+
+            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
+            apiReqHeaderDto.setFspCode(fsp.getFspCode());
+            apiReqHeaderDto.setMsgId(mssId);
+            apiReqHeaderDto.setMessageType(Constants.PAYMENT_ACKNOWLEDGMENT_NOTIFICATION);
+            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
+            apiReqHeaderDto.setSender(fsp.getFspName());
+
+            PaymentAcknoledgeApiDataDto paymentAcknoledgeApiDataDto = new PaymentAcknoledgeApiDataDto();
+            paymentAcknoledgeApiDataDto.setRequestHeader(apiReqHeaderDto);
+            paymentAcknoledgeApiDataDto.setMessageDetails(paymentAcknoledgeApiDetailDto);
+
+            log.info("Payment Acknoledge notification json in data level payload: " + paymentAcknoledgeApiDataDto);
+
+            JAXBContext jaxbContext2 = JAXBContext.newInstance(PaymentAcknoledgeApiDataDto.class);
+            Marshaller marshaller = jaxbContext2.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            StringWriter stringWriter = new StringWriter();
+            marshaller.marshal(paymentAcknoledgeApiDataDto, stringWriter);
+            String xmlPayload = stringWriter.toString();
+
+            log.info("payment acknoledgement notification xml payload: " + xmlPayload);
+
+            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
+
+            log.info("payment acknoledgement notification response from ess" + responseEntity);
+            ResponseDetailApiDto responseDetailApiDto = getUtumishiApiResponse(String.valueOf(responseEntity));
+
+            if (responseDetailApiDto.getResponseCode() == "8000") {
+                // save payment acknowledgement
+                takeoverpayment.setAcknoledgeRemarks(paymentAcknoledgeApiDetailDto.getRemarks());
+                takeoverpayment.setPaymentStatus(PaymentStatus.valueOf(paymentAcknoledgeApiDetailDto.getPaymentStatus()));
+                takeoverpayment.setRequestType(RequestType.takeover_settlement);
+                takeoverPaymentRepository.save(takeoverpayment);
+                log.info("takeover payment acknowledgement saved successfully");
+
+                return ResponseEntity.status(HttpStatus.OK).body("PAYMENT ACKNOLEDGEMENT SUCCESSFUL");
+            }else {
+                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body("PAYMENT ACKNOLEDGEMENT FAILED, WITH CODE :" + responseDetailApiDto.getResponseCode());
+            }
+        } catch (Exception e) {
+            log.info("takeover payment acknowledgement failed with :{}",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("PAYMENT ACKNOLEDGEMENT FAILED");
+        }
+
+    }
 
 
 
@@ -703,107 +1106,6 @@ public class LoanServiceImpl implements LoanService {
         } catch (Exception e) {
             log.info(e.getMessage());
             log.info("Exception occurred while processing loan top up {}");
-            return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
-        }
-    }
-    @Override
-    public ResponseEntity<String> loanTopUpPayOffBalance(String message) throws Exception {
-        log.info("Received loan TopUp pay off balance request: {}", message);
-        JAXBContext jaxbContext = JAXBContext.newInstance(LoanTopUpBalanceApiReqDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        LoanTopUpBalanceApiReqDto loanTopUpBalanceApiReqDto = (LoanTopUpBalanceApiReqDto) unmarshaller.unmarshal(stringReader);
-        String fspCode = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getRequestHeader().getFspCode();
-        String mssId = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getRequestHeader().getMsgId();
-        String loanNo = loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto().getLoanTopUpBalanceApiReqDetailDto().getLoanNumber();
-        try {
-            //convert balance utumishi request data into xml(string)
-            JAXBContext jaxbContextReq = JAXBContext.newInstance(LoanTopUpBalancApiReqDataDto.class);
-            Marshaller marshallerRq = jaxbContextReq.createMarshaller();
-            marshallerRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterRq = new StringWriter();
-            marshallerRq.marshal(loanTopUpBalanceApiReqDto.getLoanTopUpBalanceApiReqDataDto(), stringWriterRq);
-            String balanceUtumishiRq = stringWriterRq.toString();
-            System.out.println("loan charge sent to api: " + balanceUtumishiRq);
-
-            log.info("loan charges response is successfull i.e Product Code: {}" + balanceUtumishiRq);
-
-            String apiResponse = balanceXmlSendToApi(balanceUtumishiRq);
-            log.info("balance response Message from Portal Api: {}", apiResponse);
-
-//            JAXBContext jaxbContextCC = JAXBContext.newInstance(BalancePortalDto.class);
-//            Unmarshaller unmarshallerCC = jaxbContextCC.createUnmarshaller();
-//            StringReader stringReaderCC = new StringReader(apiResponse);
-//            BalancePortalDto balancePortalDto = (BalancePortalDto) unmarshallerCC.unmarshal(stringReaderCC);
-
-            Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
-
-            String sender = fspByCode.get().getFspShortName();
-
-            LoanTopUpPayOffBalanceApiRespDetailDto loanTopUpPayOffBalanceApiRespDetailDto = new LoanTopUpPayOffBalanceApiRespDetailDto();
-
-//            loanTopUpPayOffBalanceApiRespDetailDto.setLoanNumber(balancePortalDto.getLoanNumber());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setFSPReferenceNumber(balancePortalDto.getFSPReferenceNumber());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setPaymentReferenceNumber(balancePortalDto.getPaymentReferenceNumber());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setTotalPayoffAmount(balancePortalDto.getTotalPayoffAmount());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setOutstandingBalance(balancePortalDto.getOutstandingBalance());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setFinalPaymentDate(balancePortalDto.getFinalPaymentDate());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setLastDeductionDate(balancePortalDto.getLastDeductionDate());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setLastPayDate(balancePortalDto.getLastPayDate());
-//            loanTopUpPayOffBalanceApiRespDetailDto.setEndDate(balancePortalDto.getEndDate());
-
-            ApiReqHeaderDto apiReqHeaderDtoCC = new ApiReqHeaderDto();
-            apiReqHeaderDtoCC.setFspCode(fspByCode.get().getFspCode());
-            apiReqHeaderDtoCC.setMsgId(mssId);
-            apiReqHeaderDtoCC.setMessageType(Constants.LOAN_TOP_UP_BALANCE_RESPONSE);
-            apiReqHeaderDtoCC.setReceiver(Constants.UTUMISHI_RECEIVER);
-            apiReqHeaderDtoCC.setSender(fspByCode.get().getFspName());
-
-
-            LoanTopUpBalanceApiRespDataDto loanTopUpBalanceApiRespDataDto = new LoanTopUpBalanceApiRespDataDto();
-            loanTopUpBalanceApiRespDataDto.setRequestHeader(apiReqHeaderDtoCC);
-            loanTopUpBalanceApiRespDataDto.setLoanTopUpBalanceApiRespDetailDto(loanTopUpPayOffBalanceApiRespDetailDto);
-            log.info("balance json payload:" + loanTopUpPayOffBalanceApiRespDetailDto);
-
-            JAXBContext jaxbContext2CC = JAXBContext.newInstance(LoanTopUpBalanceApiRespDataDto.class);
-            Marshaller marshallerCC = jaxbContext2CC.createMarshaller();
-            marshallerCC.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterCC = new StringWriter();
-            marshallerCC.marshal(loanTopUpBalanceApiRespDataDto, stringWriterCC);
-            String xmlPayloadCC = stringWriterCC.toString();
-            System.out.println("balance xml payload: " + xmlPayloadCC);
-
-
-            log.info("balance catalog i.e with fsp code:" + xmlPayloadCC);
-
-            JAXBContext jaxbContextSg = JAXBContext.newInstance(GenericApiReqDataDto.class);
-            Unmarshaller unmarshallerSg = jaxbContextSg.createUnmarshaller();
-            StringReader stringReaderSg = new StringReader(xmlPayloadCC);
-            GenericApiReqDataDto genericApiReqDataDtoSg = (GenericApiReqDataDto) unmarshallerSg.unmarshal(stringReaderSg);
-
-            // Extract and convert the content to be signed
-            String content = convertObjectToXml(genericApiReqDataDtoSg);
-            System.out.println("Content to be signed: " + content);
-
-            String signatureSg = digitalSignature.createSignature(content);
-            System.out.println("Generated Signature: " + signatureSg);
-
-            // Create the final XML with the signature
-            String finalXml = appendSignatureToXml2(content, signatureSg);
-            System.out.println("Final XML: " + finalXml);
-
-            log.info("Final Xml Request {}:", finalXml);
-
-            log.info("Final CURL SUPPOSED request sent to utumishi***** {}:", finalXml);
-//        return ResponseEntity.ok(finalXml);
-
-            log.info("loan top up balance successfull " + finalXml);
-
-            return ResponseEntity.ok(finalXml);
-
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            log.info("Exception occurred while processing loan top up pay off balance request {}");
             return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
         }
     }
@@ -1221,128 +1523,6 @@ public class LoanServiceImpl implements LoanService {
 
     //                       TAKEOVER FEATURES
     // TAKEOVER BALANCE REQUEST AND RESPONSE
-    @Override
-    public ResponseEntity<String> loanTakeOverBalance(String message) throws Exception {
-        log.info("Received Take_Over balance request: {}", message);
-        JAXBContext jaxbContext = JAXBContext.newInstance(TakeOverBalanceApiReqDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        TakeOverBalanceApiReqDto takeOverBalanceApiReqDto = (TakeOverBalanceApiReqDto) unmarshaller.unmarshal(stringReader);
-        String fspCode = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getRequestHeader().getFspCode();
-        String mssId = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getRequestHeader().getMsgId();
-        String loanNo = takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto().getTakeOverBalanceApiReqDetailDto().getLoanNumber();
-        try {
-            //convert balance utumishi request data into xml(string)
-            JAXBContext jaxbContextReq = JAXBContext.newInstance(TakeOverBalanceApiReqDataDto.class);
-            Marshaller marshallerRq = jaxbContextReq.createMarshaller();
-            marshallerRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterRq = new StringWriter();
-            marshallerRq.marshal(takeOverBalanceApiReqDto.getTakeOverBalanceApiReqDataDto(), stringWriterRq);
-            String balanceUtumishiRq = stringWriterRq.toString();
-            System.out.println("take over balance request sent to api: " + balanceUtumishiRq);
-
-            log.info("takeover balance response is successfull i.e Product Code: {}" + balanceUtumishiRq);
-
-            // send and receive balance messages thr: Api (share with top up balance messages)
-            String apiResponse = balanceTakeOverXmlSendToApi(balanceUtumishiRq);
-            log.info("takeover balance response Message from Portal Api: {}", apiResponse);
-
-//            JAXBContext jaxbContextCC = JAXBContext.newInstance(BalancePortalDto.class);
-//            Unmarshaller unmarshallerCC = jaxbContextCC.createUnmarshaller();
-//            StringReader stringReaderCC = new StringReader(apiResponse);
-//            BalancePortalDto balancePortalDto = (BalancePortalDto) unmarshallerCC.unmarshal(stringReaderCC);
-
-            Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
-
-            String sender = fspByCode.get().getFspShortName();
-
-            TakeOverBalanceApiRespDetailDto takeOverBalanceApiRespDetailDto = new TakeOverBalanceApiRespDetailDto();
-
-//            takeOverBalanceApiRespDetailDto.setLoanNumber(balancePortalDto.getLoanNumber());
-//            takeOverBalanceApiRespDetailDto.setFspCode(fspCode);
-//            takeOverBalanceApiRespDetailDto.setFSPReferenceNumber(balancePortalDto.getFSPReferenceNumber());
-//            takeOverBalanceApiRespDetailDto.setPaymentReferenceNumber(balancePortalDto.getPaymentReferenceNumber());
-
-//            BigDecimal TotalPayOffAmount = balancePortalDto.getTotalPayoffAmount().setScale(2, RoundingMode.HALF_UP);
-//            takeOverBalanceApiRespDetailDto.setTotalPayoffAmount(TotalPayOffAmount);
-//
-//            BigDecimal OutstandingBalance = balancePortalDto.getOutstandingBalance().setScale(2, RoundingMode.HALF_UP);
-//            takeOverBalanceApiRespDetailDto.setOutstandingBalance(OutstandingBalance);
-//            takeOverBalanceApiRespDetailDto.setFspBankAccount(Constants.FSP_BANK_ACCOUNT);
-//            takeOverBalanceApiRespDetailDto.setFspBankAccountName(Constants.FSP_BANK_ACCOUNT_NAME);
-//            takeOverBalanceApiRespDetailDto.setSwiftCode(Constants.SWIFT_CODE);
-//            takeOverBalanceApiRespDetailDto.setMnoChannels(balancePortalDto.getMnoChannels());
-
-            //calculate payment date
-            LocalDate calculatedFinalPaymentDate = calculateFinalPaymentDate();
-            // Convert LocalDate to Date
-            Date finalPaymentDate = Date.from(calculatedFinalPaymentDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-            // Convert Date to LocalDateTime
-            LocalDateTime localPaymentDateTime = finalPaymentDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-
-            // Format LocalDateTime to "yyyy-MM-dd'T'HH:mm:ss"
-            String formattedFinalPaymentDate = localPaymentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-
-
-            takeOverBalanceApiRespDetailDto.setFinalPaymentDate(formattedFinalPaymentDate);
-//            takeOverBalanceApiRespDetailDto.setLastDeductionDate(balancePortalDto.getLastDeductionDate());
-//            takeOverBalanceApiRespDetailDto.setDeductionEndDate(balancePortalDto.getDeductionEndDate());
-
-
-            ApiReqHeaderDto apiReqHeaderDtoCC = new ApiReqHeaderDto();
-            apiReqHeaderDtoCC.setFspCode(fspByCode.get().getFspCode());
-            apiReqHeaderDtoCC.setMsgId(mssId);
-            apiReqHeaderDtoCC.setMessageType(Constants.LOAN_TAKEOVER_BALANCE_RESPONSE);
-            apiReqHeaderDtoCC.setReceiver(Constants.UTUMISHI_RECEIVER);
-            apiReqHeaderDtoCC.setSender(fspByCode.get().getFspName());
-
-
-            TakeOverBalanceApiRespDataDto takeOverBalanceApiRespDataDto = new TakeOverBalanceApiRespDataDto();
-            takeOverBalanceApiRespDataDto.setRequestHeader(apiReqHeaderDtoCC);
-            takeOverBalanceApiRespDataDto.setTakeOverBalanceApiRespDetailDto(takeOverBalanceApiRespDetailDto);
-            log.info("takeover balance json payload:" + takeOverBalanceApiRespDetailDto);
-
-            JAXBContext jaxbContext2CC = JAXBContext.newInstance(TakeOverBalanceApiRespDto.class);
-            Marshaller marshallerCC = jaxbContext2CC.createMarshaller();
-            marshallerCC.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterCC = new StringWriter();
-            marshallerCC.marshal(takeOverBalanceApiRespDataDto, stringWriterCC);
-            String xmlPayloadCC = stringWriterCC.toString();
-            System.out.println("takeover balance xml payload: " + xmlPayloadCC);
-
-            log.info("takeover balance catalog i.e with fsp code:" + xmlPayloadCC);
-
-            JAXBContext jaxbContextSg = JAXBContext.newInstance(GenericApiReqDataDto.class);
-            Unmarshaller unmarshallerSg = jaxbContextSg.createUnmarshaller();
-            StringReader stringReaderSg = new StringReader(xmlPayloadCC);
-            GenericApiReqDataDto genericApiReqDataDtoSg = (GenericApiReqDataDto) unmarshallerSg.unmarshal(stringReaderSg);
-
-            // Extract and convert the content to be signed
-            String content = convertObjectToXml(genericApiReqDataDtoSg);
-            System.out.println("Content to be signed: " + content);
-
-            String signatureSg = digitalSignature.createSignature(content);
-            System.out.println("Generated Signature: " + signatureSg);
-
-            // Create the final XML with the signature
-            String finalXml = appendSignatureToXml2(content, signatureSg);
-            System.out.println("Final XML: " + finalXml);
-
-            log.info("Final Xml Request {}:", finalXml);
-
-            log.info("Final CURL SUPPOSED request sent to utumishi***** {}:", finalXml);
-
-            log.info("takeover balance successfull " + finalXml);
-
-            return ResponseEntity.ok(finalXml);
-
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            log.info("Exception occurred while processing take over balance request {}");
-            return createResponseEntity(ResponseCodes.ERROR_PROCESSING_REQUEST, fspCode, mssId);
-        }
-    }
 
     //calculate final payment date
     public LocalDate calculateFinalPaymentDate() {
@@ -1430,149 +1610,6 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
-    @Override
-    public ResponseEntity<String> takeOverPaymentNotification(String message) throws Exception {
-        log.info("Received take over payment Notification request: {}", message);
-
-        JAXBContext jaxbContext = JAXBContext.newInstance(PaymentNotificationApiReqDto.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        StringReader stringReader = new StringReader(message);
-        PaymentNotificationApiReqDto paymentNotificationApiReqDto = (PaymentNotificationApiReqDto) unmarshaller.unmarshal(stringReader);
-        String fspCode = paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getRequestHeader().getFspCode();
-        String mssId = paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto().getRequestHeader().getMsgId();
-
-        try {
-
-            //loan pay off operation
-            Optional<FinancialServiceProvider> fsp =
-                    financialServiceProviderRepository.findByFspCode(fspCode);
-
-            if (fsp.isEmpty()) {
-                log.info("invalid fsp code, reason: no such fsp with code: " + fspCode);
-                return createResponseEntity(ResponseCodes.INVALID_FINANCIAL_SERVICE_PROVIDER, fspCode, mssId);
-            }
-
-            // convert l application request data into xml(string)
-            JAXBContext jaxbContextReq = JAXBContext.newInstance(PaymentNotificationApiReqDataDto.class);
-            Marshaller marshallerLRq = jaxbContextReq.createMarshaller();
-            marshallerLRq.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriterLRq = new StringWriter();
-            marshallerLRq.marshal(paymentNotificationApiReqDto.getPaymentNotificationApiReqDataDto(), stringWriterLRq);
-            String loanUtumishiRq = stringWriterLRq.toString();
-
-            log.info("prepared request sent to the queue: " + loanUtumishiRq);
-
-            // publish to send to the Queue
-
-
-            log.info("request sent to the queue: " + loanUtumishiRq);
-
-
-            log.info("response is successfull ");
-            return createResponseEntity(ResponseCodes.SUCCESSFUL_RECEIVED, fspCode, mssId);
-
-        } catch (Exception e) {
-            log.info(e.getMessage());
-            return createResponseEntity(ResponseCodes.INTERNAL_SERVER_ERROR, fspCode, mssId);
-
-        }
-
-    }
-
-    @Override
-    public ResponseEntity<String> paymentAcknoledgementNotification(String message) throws Exception {
-        log.info("Payment acknoledgement notification message" + message);
-//        JAXBContext jaxbContext = JAXBContext.newInstance(PaymentAcknoledgementNotificationPortalDto.class);
-//        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-//        StringReader stringReader = new StringReader(message);
-//        PaymentAcknoledgementNotificationPortalDto paymentAcknoledgementNotificationPortalDto = (PaymentAcknoledgementNotificationPortalDto) unmarshaller.unmarshal(stringReader);
-        String mssId = generateMessageId();
-        List<FinancialServiceProvider> fspList = financialServiceProviderRepository.findAll();
-        FinancialServiceProvider fsp = null;
-        if (!fspList.isEmpty()) {
-            fsp = fspList.get(0);
-        }
-        try {
-            PaymentAcknoledgeApiDetailDto paymentAcknoledgeApiDetailDto = new PaymentAcknoledgeApiDetailDto();
-//            paymentAcknoledgeApiDetailDto.setApplicationNumber(paymentAcknoledgementNotificationPortalDto.getApplicatioNumber());
-//            paymentAcknoledgeApiDetailDto.setLoanNumber(paymentAcknoledgementNotificationPortalDto.getLoanNumber());
-//            paymentAcknoledgeApiDetailDto.setRemarks(paymentAcknoledgementNotificationPortalDto.getRemarks());
-//            paymentAcknoledgeApiDetailDto.setFspReferenceNumber(paymentAcknoledgementNotificationPortalDto.getFspReferenceNumber());
-//            paymentAcknoledgeApiDetailDto.setPaymentStatus(paymentAcknoledgementNotificationPortalDto.getPaymentStatus());
-
-            log.info("repayment notification json in detail payload: " + paymentAcknoledgeApiDetailDto);
-
-            ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
-            apiReqHeaderDto.setFspCode(fsp.getFspCode());
-            apiReqHeaderDto.setMsgId(mssId);
-            apiReqHeaderDto.setMessageType(Constants.PAYMENT_ACKNOWLEDGMENT_NOTIFICATION);
-            apiReqHeaderDto.setReceiver(Constants.UTUMISHI_RECEIVER);
-            apiReqHeaderDto.setSender(fsp.getFspName());
-
-
-            PaymentAcknoledgeApiDataDto paymentAcknoledgeApiDataDto = new PaymentAcknoledgeApiDataDto();
-            paymentAcknoledgeApiDataDto.setRequestHeader(apiReqHeaderDto);
-            paymentAcknoledgeApiDataDto.setMessageDetails(paymentAcknoledgeApiDetailDto);
-
-            log.info("Payment Acknoledge notification json in data level payload: " + paymentAcknoledgeApiDataDto);
-
-            JAXBContext jaxbContext2 = JAXBContext.newInstance(PaymentAcknoledgeApiDataDto.class);
-            Marshaller marshaller = jaxbContext2.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriter = new StringWriter();
-            marshaller.marshal(paymentAcknoledgeApiDataDto, stringWriter);
-            String xmlPayload = stringWriter.toString();
-            System.out.println("Payment acknoledgement notification xml payload: " + xmlPayload);
-
-            log.info("payment acknoledgement notification xml payload: " + xmlPayload);
-
-            ResponseEntity<String> responseEntity = generateRequestSignature2(xmlPayload);
-
-            log.info("payment acknoledgement notification sent to be signed" + xmlPayload);
-
-            log.info("payment acknoledgement notification response from ess" + responseEntity);
-            //Create a payload for request and response
-            //set request
-            RequestPaymentAcknPortalDto requestPaymentAcknPortalDto = new RequestPaymentAcknPortalDto();
-//            essRequestPaymentAcknoledgementPortalDto.setApplicatioNumber(paymentAcknoledgementNotificationPortalDto.getApplicatioNumber());
-//            essRequestPaymentAcknoledgementPortalDto.setRemarks(paymentAcknoledgementNotificationPortalDto.getRemarks());
-//            essRequestPaymentAcknoledgementPortalDto.setFspReferenceNumber(paymentAcknoledgementNotificationPortalDto.getFspReferenceNumber());
-//            essRequestPaymentAcknoledgementPortalDto.setLoanNumber(paymentAcknoledgementNotificationPortalDto.getLoanNumber());
-//            essRequestPaymentAcknoledgementPortalDto.setPaymentStatus(paymentAcknoledgementNotificationPortalDto.getPaymentStatus());
-
-            //set response
-            ResponsePayAcknPortalDto responsePayAcknPortalDto = new ResponsePayAcknPortalDto();
-            responsePayAcknPortalDto.setResponseDescription(String.valueOf(responseEntity));
-
-            //combine request and response
-            PaymentNotfRespDataDto paymentNotfRespDataDto = new PaymentNotfRespDataDto();
-            paymentNotfRespDataDto.setMessageRequest(requestPaymentAcknPortalDto);
-            paymentNotfRespDataDto.setMessageResponse(responsePayAcknPortalDto);
-
-
-
-
-            JAXBContext jaxbContext08 = JAXBContext.newInstance(PaymentNotfRespDataDto.class);
-            Marshaller marshaller08 = jaxbContext08.createMarshaller();
-            marshaller08.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            StringWriter stringWriter08 = new StringWriter();
-            marshaller08.marshal(paymentNotfRespDataDto, stringWriter08);
-            String xmlPayload08 = stringWriter08.toString();
-            System.out.println("payment acknoledgement notification approval xml payload: " + xmlPayload08);
-            log.info("Combined payment acknoledgement notification and ess response" + xmlPayload08);
-            String cleanedXml08 = cleanMessage(xmlPayload08);
-
-            System.out.println("Cleaned payment acknoledgement notification xml payload: " + cleanedXml08);
-            log.info("Cleaned Combined payment acknoledgement notification and ess response" + cleanedXml08);
-
-
-            return responseEntity;
-        } catch (Exception e) {
-            log.info("fail to send payment acknoledgement notification to utumishi ");
-            return null;
-        }
-
-    }
 
     @Override
     public ResponseEntity<String> extractTakeoverRequests() throws Exception {

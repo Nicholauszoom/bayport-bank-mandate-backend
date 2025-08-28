@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -82,13 +83,8 @@ public class PriceClientRvServiceImpl implements PriceClientRvService {
     public void saveClientRvFromExcel(MultipartFile file) throws Exception {
         List<ClientRv> clientRvs = new ArrayList<>();
 
-        if (clientRvRepository.count() > 0) {
-            clientRvRepository.deleteAll();
-        }
-
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-
             FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
@@ -96,24 +92,62 @@ public class PriceClientRvServiceImpl implements PriceClientRvService {
                 if (row == null || isRowEmpty(row)) continue;
 
                 try {
-                    ClientRv clientRv = new ClientRv();
-                    clientRv.setCheckNumber(getStringValue(row.getCell(0), evaluator));
-                    clientRv.setLoanNumber(getStringValue(row.getCell(1), evaluator));
-                    clientRv.setReplaceBalance(getBigDecimalValue(row.getCell(2), evaluator));
-                    clientRvs.add(clientRv);
+                    String loanNumber = getStringValue(row.getCell(0), evaluator);
+                    String fspReferenceNumber = getStringValue(row.getCell(1), evaluator);
+                    String paymentReferenceNumber = getStringValue(row.getCell(2), evaluator);
+                    String checkNumber = getStringValue(row.getCell(3), evaluator);
+                    BigDecimal totalPayoffAmount = getBigDecimalValue(row.getCell(4), evaluator);
+                    String loanEndDate = getStringValue(row.getCell(5), evaluator);
+                    String lastDeductionDate = getStringValue(row.getCell(6), evaluator);
+                    BigDecimal totalOutstandingBalance =  getBigDecimalValue(row.getCell(7), evaluator);
+                    BigDecimal takeoverAmount = getBigDecimalValue(row.getCell(8), evaluator);
+                    BigDecimal principalAmount = getBigDecimalValue(row.getCell(9), evaluator);
+                    BigDecimal installmentAmount = getBigDecimalValue(row.getCell(10), evaluator);
+
+                    Optional<ClientRv> existingClientRvOpt = clientRvRepository.findByCheckNumbers(checkNumber);
+
+                    if (existingClientRvOpt.isPresent()) {
+                        ClientRv existing = existingClientRvOpt.get();
+                        existing.setLoanNumber(loanNumber);
+                        existing.setFspReferenceNumber(fspReferenceNumber);
+                        existing.setPaymentReferenceNumber(paymentReferenceNumber);
+                        existing.setTotalPayoffAmount(totalPayoffAmount);
+                        existing.setLoanEndDate(loanEndDate);
+                        existing.setLastDeductionDate(lastDeductionDate);
+                        existing.setTotalOutstandingBalance(totalOutstandingBalance);
+                        existing.setTakeoverAmount(takeoverAmount);
+                        existing.setPrincipalAmount(principalAmount);
+                        existing.setInstallmentAmount(installmentAmount);
+                        clientRvs.add(existing);
+                    } else {
+                        ClientRv clientRv = new ClientRv();
+                        clientRv.setLoanNumber(loanNumber);
+                        clientRv.setFspReferenceNumber(fspReferenceNumber);
+                        clientRv.setPaymentReferenceNumber(paymentReferenceNumber);
+                        clientRv.setCheckNumber(checkNumber);
+                        clientRv.setTotalPayoffAmount(totalPayoffAmount);
+                        clientRv.setLoanEndDate(loanEndDate);
+                        clientRv.setLastDeductionDate(lastDeductionDate);
+                        clientRv.setTotalOutstandingBalance(totalOutstandingBalance);
+                        clientRv.setTakeoverAmount(takeoverAmount);
+                        clientRv.setPrincipalAmount(principalAmount);
+                        clientRv.setInstallmentAmount(installmentAmount);
+                        clientRvs.add(clientRv);
+                    }
                 } catch (Exception e) {
-                    log.warn("Error processing row {}: {}", i, e.getMessage());
+                    log.info("Error processing row {}: {}", i, e.getMessage());
                 }
             }
         }
 
         if (!clientRvs.isEmpty()) {
             clientRvRepository.saveAll(clientRvs);
-            log.info("Successfully saved {} client rv records", clientRvs.size());
+            log.info("Successfully saved/updated {} client rv records", clientRvs.size());
         } else {
-            log.warn("No valid client rv records found in the Excel file");
+            log.info("No valid client rv records found in the Excel file");
         }
     }
+
 
     @Override
     public ClientRv findByCheckNumber(String checkNumber) {

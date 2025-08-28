@@ -1,6 +1,7 @@
 package com.example.Project.Management.bayport.apis.controller;
 
 import com.example.Project.Management.bayport.apis.dto.GenericApiReqDataDtoWrapper;
+import com.example.Project.Management.bayport.balance.service.BalanceService;
 import com.example.Project.Management.bayport.charge.service.ChargeService;
 import com.example.Project.Management.bayport.common.DigitalSignature;
 import com.example.Project.Management.bayport.disbursement.service.DisbursementService;
@@ -54,6 +55,8 @@ public class UtumishiController {
     @Autowired
     UtumishiResponseService utumishiResponseService;
 
+    private final BalanceService balanceService;
+
 
     @Autowired
     Utils utils;
@@ -71,13 +74,14 @@ public class UtumishiController {
     private DigitalSignature digitalSignature; // Inject DigitalSignature bean
 
 
-    public UtumishiController(LoanService loanService, ChargeService chargeService, ProductService productService, ProductDecommissionService productDecommissionService, DigitalSignature digitalSignature, UtumishiResponseService utumishiResponseService) {
+    public UtumishiController(LoanService loanService, ChargeService chargeService, ProductService productService, ProductDecommissionService productDecommissionService, DigitalSignature digitalSignature, UtumishiResponseService utumishiResponseService, BalanceService balanceService) {
         this.loanService = loanService;
         this.chargeService = chargeService;
         this.productService = productService;
         this.productDecommissionService = productDecommissionService;
         this.digitalSignature = digitalSignature;
         this.utumishiResponseService = utumishiResponseService;
+        this.balanceService = balanceService;
     }
 
     private ResponseEntity<String> createResponseEntity(int responseCode, String fspCode, String mssId) throws Exception {

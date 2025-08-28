@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/login", "/profile**", "/user**", "/charge**", "/dashboard", "/verify", "/product**", "/price**","/client**", "/loan**").permitAll()
+                        .requestMatchers("/", "/login", "/profile**", "/user**", "/charge**", "/dashboard", "/verify", "/product**", "/price**","/client**", "/loan**", "/loan-view/**","/charge-view/**", "balance-view/**", "/balance-list").permitAll()
 
                         .requestMatchers("/static/**", "/media/**", "/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
 
@@ -89,7 +89,7 @@ public class SecurityConfiguration {
 //        CorsConfiguration configuration = new CorsConfiguration();
 //
 //        // Add more potential origins
-//        coniguration.setAllowedOrigins(List.of(
+//        configuration.setAllowedOrigins(List.of(
 //                "http://10.25.32.30:8083",
 //                "http://localhost:8083",
 //                "http://127.0.0.1:8083"

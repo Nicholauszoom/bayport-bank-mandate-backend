@@ -91,7 +91,7 @@ public class ChargeServiceImpl implements ChargeService {
             //if is refinanced or new i.e calculate take home amount
             ClientRv client = priceClientRvService.findByCheckNumber(checkNumber);
             if (client != null){
-                RV = client.getReplaceBalance();
+                RV = client.getTotalPayoffAmount();
             }
             takeHomeAmount = calculator.getTakeHomeAmount(RV, chargeResponse.getOtherCharges(),
                     chargeResponse.getNetLoanAmount());

@@ -43,6 +43,7 @@ import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -85,7 +86,9 @@ public class DisbursementServiceImpl implements DisbursementService {
             fsp = fspList.get(0);
         }
         try {
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime currentdate = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            String now = currentdate.format(formatter);
             Optional<Loan> optionalLoan = loanRepository.findById(id);
             if (optionalLoan.isEmpty()) {
                 log.info("Loan Not Found, id: {}", id);
@@ -111,7 +114,7 @@ public class DisbursementServiceImpl implements DisbursementService {
                 loanDisburseNotApiDetailDto.setFspReferenceNumber(String.valueOf(loan.getId()));
                 loanDisburseNotApiDetailDto.setLoanNumber(String.valueOf(loan.getId()));
                 loanDisburseNotApiDetailDto.setTotalAmountToPay(charge.getTotalAmountToPay());
-                loanDisburseNotApiDetailDto.setDisbursementDate(String.valueOf(now));
+                loanDisburseNotApiDetailDto.setDisbursementDate(now);
             } else {
                 requestType = RequestType.disbursement_rejected;
                 constant_disburse = Constants.LOAN_DISBURSEMENT_FAILURE_NOTIFICATION;
@@ -144,7 +147,7 @@ public class DisbursementServiceImpl implements DisbursementService {
             ResponseEntity<String> responseEntityDisburse = loanService.generateRequestSignature2(xmlPayload);
             log.info("utumishi response message for disbursement notification sent to the queue: {}", responseEntityDisburse);
 
-            loan.setDisbursementDate(String.valueOf(now));
+            loan.setDisbursementDate(now);
             loan.setRequestType(requestType);
 
             log.info("Disbursement Utumishi Response: {}", responseEntityDisburse);
