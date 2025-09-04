@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -25,6 +27,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
     private MessageSource messageSource;
 
@@ -32,8 +36,9 @@ public class UserController {
     String status = null;
     Boolean isError = false;
 
-    public UserController(UserService userService, MessageSource messageSource) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder, MessageSource messageSource) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
         this.messageSource = messageSource;
     }
 
@@ -43,6 +48,26 @@ public class UserController {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(currentUser);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable("id") long id) {
+        Optional<User> userOpt = userService.findByUserId(id);
+        log.info("userOpt = {}", userOpt.get());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        User user = userOpt.get();
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole().name());
+        dto.setPassword(user.getPassword());
+
+        return ResponseEntity.ok(dto);
+    }
+
 
     @PostMapping("/assign_role")
     public ResponseEntity<?> assignUserRole(@RequestBody UserDto userDto, HttpServletRequest request){
@@ -54,24 +79,24 @@ public class UserController {
                 log.info("userDto is null");
                 ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userDto is null");
             }
-                Optional<User> user = userService.findByUserId(userDto.getId());
+            Optional<User> user = userService.findByUserId(userDto.getId());
 
-                if(user != null) {
+            if(user != null) {
 
-                    user.get().setRole(Role.valueOf(userDto.getRole()));
-                    User updatedUser = userService.saveUser(user.get());
+                user.get().setRole(Role.valueOf(userDto.getRole()));
+                User updatedUser = userService.saveUser(user.get());
 
-                    assignUser = updatedUser;
+                assignUser = updatedUser;
 
-                    if(assignUser != null) {
-                        log.info("success assigned role, user ID: {}", assignUser.getId());
-                        ResponseEntity.status(HttpStatus.OK).body(assignUser);
+                if(assignUser != null) {
+                    log.info("success assigned role, user ID: {}", assignUser.getId());
+                    ResponseEntity.status(HttpStatus.OK).body(assignUser);
 
-                    }
-                } else {
-                    log.info("no user to assigned role, user ID: {}", userDto.getId());
-                    ResponseEntity.status(HttpStatus.NOT_FOUND).body("no user to assigned role");
                 }
+            } else {
+                log.info("no user to assigned role, user ID: {}", userDto.getId());
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body("no user to assigned role");
+            }
 
 
         } catch(Exception e) {
@@ -119,5 +144,41 @@ public class UserController {
             @PathVariable("id") long id) {
         userService.deleteUser(id);
     }
+
+    @PostMapping("/{id}/update")
+    public ResponseEntity<?> updateUserDetails(
+            @PathVariable("id") long id,
+            Authentication authentication,
+            @RequestBody UserDto userDto) {
+
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+
+            String username = authentication.getName();
+            log.info("username : {}", username);
+
+            Optional<User> userOpt = userService.findById(id);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            User user = userOpt.get();
+            user.setUsername(userDto.getUsername());
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            user.setEmail(userDto.getEmail());
+            user.setRole(Role.valueOf(userDto.getRole()));
+
+            userService.saveUser(user);
+            log.info("updated user details: {}", user);
+
+            return ResponseEntity.ok("USER INFORMATION UPDATED SUCCESSFULLY");
+        } catch (Exception e) {
+            log.error("Update failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("USER INFORMATION FAILED TO UPDATE");
+        }
+    }
+
 
 }

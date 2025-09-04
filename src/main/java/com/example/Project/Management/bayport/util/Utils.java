@@ -21,17 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.example.Project.Management.bayport.apis.dto.ApiReqHeaderDto;
-import com.example.Project.Management.bayport.apis.dto.MessageResponse;
-import com.example.Project.Management.bayport.apis.dto.MessageResponseWrapper;
-import com.example.Project.Management.bayport.apis.dto.ResponseMessageDetail;
-import com.example.Project.Management.bayport.apis.dto.accountValidationResponse.MessageAccValidationResponse;
-import com.example.Project.Management.bayport.apis.dto.accountValidationResponse.MessageAccValidationResponseWrapper;
-import com.example.Project.Management.bayport.apis.dto.accountValidationResponse.ResponseAccValidationMessageDetail;
-import com.example.Project.Management.bayport.common.DigitalSignature;
-import com.example.Project.Management.bayport.fsp.models.entities.FinancialServiceProvider;
-import com.example.Project.Management.bayport.fsp.repositories.FinancialServiceProviderRepository;
-import com.example.Project.Management.bayport.product.service.ProductServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
@@ -92,7 +81,6 @@ public class Utils {
 
     private final MessageSource messageSource;
 
-    private final FinancialServiceProviderRepository financialServiceProviderRepository;
 
     Locale currentLocale = LocaleContextHolder.getLocale();
 
@@ -100,19 +88,13 @@ public class Utils {
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    private DigitalSignature digitalSignature;
 
-    private static final Logger logger = LogManager.getLogger(ProductServiceImpl.class);
+        private static final Logger logger = LogManager.getLogger(Utils.class);
 
-    public Utils(MessageSource messageSource, FinancialServiceProviderRepository financialServiceProviderRepository) {
+    public Utils(MessageSource messageSource) {
         this.messageSource = messageSource;
-        this.financialServiceProviderRepository = financialServiceProviderRepository;
     }
 
-    @Autowired
-    void setDigitalSignature(DigitalSignature digitalSignature) {
-        this.digitalSignature = digitalSignature;
-    }
 
     /**
      * Validate Xml Schema against Xsd
@@ -1011,12 +993,6 @@ public class Utils {
     }
 
 
-    public MessageResponseWrapper messageResponseWrapper(String response) throws JAXBException {
-        return (MessageResponseWrapper) convertStringToXml(JAXBContext.newInstance(MessageResponseWrapper.class),
-                response);
-    }
-
-
     public boolean isFutureDate(Date date) {
         Date currentDate = new Date();
         return date.after(currentDate);
@@ -1046,101 +1022,5 @@ public class Utils {
     public void copyNonNullProperties(Object source, Object destination) {
         BeanUtils.copyProperties(source, destination, getNullPropertyNames(source));
     }
-
-
-
-    public ApiReqHeaderDto getApiRequestHeader(String fspCode, String receipt, String apiType, String sender){
-        ApiReqHeaderDto apiReqHeaderDto = new ApiReqHeaderDto();
-        apiReqHeaderDto.setFspCode(fspCode);
-        apiReqHeaderDto.setMsgId(receipt);
-        apiReqHeaderDto.setMessageType(apiType);
-        apiReqHeaderDto.setReceiver(Constant.UTUMISHI_RECEIVER);
-        apiReqHeaderDto.setSender(sender);
-
-        return apiReqHeaderDto;
-    }
-
-    public ResponseEntity<String> messageResponseWrapperToUtumishi(int code, String message, String fspCode, String receipt, String apiType) throws Exception {
-        MessageResponseWrapper messageResponseWrapper = new MessageResponseWrapper();
-
-        ResponseMessageDetail responseMessageDetail = new ResponseMessageDetail(String.valueOf(code), message);
-
-        Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
-
-        String sender = fsp.get().getFspShortName();
-
-        ApiReqHeaderDto apiReqHeaderDto = getApiRequestHeader(fspCode, receipt, apiType, sender);
-        MessageResponse messageResponse  = new MessageResponse();
-        messageResponse.setMessageDetails(responseMessageDetail);
-        messageResponse.setHeader(apiReqHeaderDto);
-
-
-        String stringToBeSigned = convertXmlToString(JAXBContext.newInstance(MessageResponse.class), messageResponse);
-        String signature = digitalSignature.createSignature(stringToBeSigned);
-        messageResponseWrapper.setData(messageResponse);
-        messageResponseWrapper.setSignature(signature);
-        String requestToBeSend = convertXmlToString(JAXBContext.newInstance(MessageResponseWrapper.class), messageResponseWrapper);
-
-
-        return ResponseEntity.ok(requestToBeSend);
-    }
-
-
-
-    public ResponseEntity<String> messageResponseWrapperToPayPort(int code, String message, String fspCode, String receipt, String apiType) throws Exception {
-        MessageResponseWrapper messageResponseWrapper = new MessageResponseWrapper();
-        ResponseMessageDetail responseMessageDetail = new ResponseMessageDetail(String.valueOf(code), message);
-
-        Optional<FinancialServiceProvider> fsp = financialServiceProviderRepository.findByFspCode(fspCode);
-
-        if (fsp.isEmpty()){
-            return ResponseEntity.ok("invalid financial service provide with fspCode"+ fspCode);
-        }
-        String sender = fsp.get().getFspShortName();
-
-        ApiReqHeaderDto apiReqHeaderDto = getApiRequestHeader(fspCode, receipt, apiType, sender);
-
-        MessageResponse messageResponse = new MessageResponse();
-        messageResponse.setMessageDetails(responseMessageDetail);
-        messageResponse.setHeader(apiReqHeaderDto);
-
-        messageResponseWrapper.setData(messageResponse);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String stringToBeSigned = objectMapper.writeValueAsString(messageResponse);
-        String signature = digitalSignature.createSignature(stringToBeSigned);
-        messageResponseWrapper.setSignature(signature);
-
-        // Convert messageResponseWrapper to JSON string
-        String jsonResponseString = objectMapper.writeValueAsString(messageResponseWrapper);
-
-        return ResponseEntity.ok(jsonResponseString);
-    }
-
-
-    public ResponseEntity<String> messageAccountValidationResponseWrapperToUtumishi(Boolean valid, String message, String fspCode, String receipt, String apiType) throws Exception {
-        MessageAccValidationResponseWrapper messageResponseWrapperAcc = new MessageAccValidationResponseWrapper();
-
-        ResponseAccValidationMessageDetail responseMessageDetailAcc = new ResponseAccValidationMessageDetail(valid, message);
-        Optional<FinancialServiceProvider> fspByCode = financialServiceProviderRepository.findByFspCode(fspCode);
-
-        String sender = fspByCode.get().getFspShortName();
-
-        ApiReqHeaderDto apiReqHeaderDto = getApiRequestHeader(fspCode, receipt, apiType, sender);
-        MessageAccValidationResponse messageResponseAcc  = new MessageAccValidationResponse();
-        messageResponseAcc.setMessageDetails(responseMessageDetailAcc);
-        messageResponseAcc.setHeader(apiReqHeaderDto);
-
-
-        String stringToBeSigned = convertXmlToString(JAXBContext.newInstance(MessageAccValidationResponse.class), messageResponseAcc);
-        String signature = digitalSignature.createSignature(stringToBeSigned);
-        messageResponseWrapperAcc.setData(messageResponseAcc);
-        messageResponseWrapperAcc.setSignature(signature);
-        String requestToBeSend = convertXmlToString(JAXBContext.newInstance(MessageAccValidationResponseWrapper.class), messageResponseWrapperAcc);
-
-
-        return ResponseEntity.ok(requestToBeSend);
-    }
-
 
 }

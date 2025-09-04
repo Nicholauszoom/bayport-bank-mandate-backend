@@ -1,6 +1,9 @@
 package com.example.Project.Management.bayport.config;
 
 import com.example.Project.Management.bayport.auth.user.repository.UserRepository;
+import com.example.Project.Management.bayport.filter.RequestLoggingFilter;
+import com.example.Project.Management.bayport.filter.ResponseLoggingFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class ApplicationConfiguration {
@@ -43,5 +47,26 @@ public class ApplicationConfiguration {
         authProvider.setPasswordEncoder(passwordEncoder());
 
         return authProvider;
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public FilterRegistrationBean<RequestLoggingFilter> requestLoggingFilter() {
+        FilterRegistrationBean<RequestLoggingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new RequestLoggingFilter());
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
+    }
+
+    @Bean
+    public FilterRegistrationBean<ResponseLoggingFilter> responseLoggingFilter() {
+        FilterRegistrationBean<ResponseLoggingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new ResponseLoggingFilter());
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
     }
 }

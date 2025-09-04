@@ -1,8 +1,7 @@
 spring:
   datasource:
     hikari.schema: public
-#    url: jdbc:postgresql://localhost:5432/project_management_bayport?serverTimezone=UTC
-    url: jdbc:postgresql://localhost:5432/sample_db?serverTimezone=UTC
+    url: jdbc:postgresql://localhost:5432/bayport-mandate?serverTimezone=UTC
     username: postgres
     password: SOMI
   #Email service
@@ -26,3 +25,13 @@ dflex:
     public: dflexpublic.pfx
     alias: dflex.co.tz
     password: $flex4dm1n
+
+
+# LOGGING CONFIGS
+logging:
+  level:
+    root: INFO
+    com.yourcompany.yourapp: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

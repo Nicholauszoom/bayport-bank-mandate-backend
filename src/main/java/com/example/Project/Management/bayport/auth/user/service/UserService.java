@@ -20,4 +20,6 @@ public interface UserService {
     Optional<User> findByEmail(String username);
 
     void deleteUser(long id);
+
+    Optional<User> findById(long id);
 }
