@@ -27,6 +27,9 @@ public class DirectDebitMandate extends CommonEntity {
     @Column(name = "partner_id", nullable = false)
     private String partnerId;
 
+    @Column(name = "request_id")
+    private String requestId;
+
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 

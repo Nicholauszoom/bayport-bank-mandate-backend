@@ -1,5 +1,8 @@
 package com.example.Project.Management.bayport.crdb.controller;
 
+import com.example.Project.Management.bayport.auth.enumerated.Role;
+import com.example.Project.Management.bayport.auth.user.dto.UserDto;
+import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.crdb.dto.portal.DirectDebitMandateDto;
 import com.example.Project.Management.bayport.crdb.entity.DirectDebitMandate;
 import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType;
@@ -8,6 +11,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -132,5 +136,34 @@ public class DirectDebitMandateController {
     @PostMapping("/submit/mandate")
     public ResponseEntity<?> subbmitMandate(@NonNull @RequestBody List<Long> ids) throws Exception {
         return crdbDirectMandateService.submitMandate(ids);
+    }
+
+    @PostMapping("/{id}/update")
+    public ResponseEntity<?> updateMandate(@PathVariable("id") long id,
+                                           @RequestBody DirectDebitMandateDto directDebitMandateDto) {
+        try {
+            Optional<DirectDebitMandate> directDebitMandateOptional = crdbDirectMandateService.findById(id);
+            if (directDebitMandateOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mandate not found");
+            }
+
+            DirectDebitMandate directDebitMandate = directDebitMandateOptional.get();
+            directDebitMandate.setPhoneNumber(directDebitMandateDto.getPhoneNumber());
+            directDebitMandate.setDebitAccount(directDebitMandateDto.getDebitAccount());
+            directDebitMandate.setTotalAmount(directDebitMandateDto.getTotalAmount());
+            directDebitMandate.setInstallmentAmount(directDebitMandateDto.getInstallmentAmount());
+            directDebitMandate.setStartDate(directDebitMandateDto.getStartDate());
+            directDebitMandate.setEndDate(directDebitMandateDto.getEndDate());
+            directDebitMandate.setFrequencyType(directDebitMandateDto.getFrequencyType());
+            directDebitMandate.setFrequency(directDebitMandateDto.getFrequency());
+            directDebitMandate.setBillDetails(directDebitMandateDto.getBillDetails());
+            crdbDirectMandateService.save(directDebitMandate);
+            log.info("updated direct mandate details: {}", directDebitMandate);
+
+            return ResponseEntity.ok("DI9RECT MANDATE UPDATED SUCCESSFULLY");
+        } catch (Exception e) {
+            log.error("Update failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("DIRECT MANDATE FAILED TO UPDATE");
+        }
     }
 }

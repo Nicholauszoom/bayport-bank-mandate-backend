@@ -16,13 +16,18 @@ public class DatshboardController {
     @Autowired
     private DashboardService dashboardService;
 
-
-
     @GetMapping("/api/dashboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<DashboardDto> getDashboard() {
         DashboardDto dashboard = dashboardService.createDashboard();
         return ResponseEntity.ok(dashboard);
+    }
+
+    @GetMapping("/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<DashboardDto> getStatistics() {
+        DashboardDto statistics = dashboardService.statistics();
+        return ResponseEntity.ok(statistics);
     }
 
 }

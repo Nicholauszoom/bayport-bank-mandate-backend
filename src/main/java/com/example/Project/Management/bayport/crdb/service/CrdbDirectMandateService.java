@@ -57,7 +57,7 @@ public class CrdbDirectMandateService {
 
     public DirectDebitMandateResponse initiateDirectDebit(DirectDebitMandateRequest request) throws NoSuchAlgorithmException {
         // Generate unique RequestId (UUID)
-        java.lang.String requestId = UUID.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
 
         // Set PartnerId from config if not provided
         if (request.getPartnerId() == null) {
@@ -65,11 +65,11 @@ public class CrdbDirectMandateService {
         }
 
         // Generate Checksum
-        java.lang.String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
-        java.lang.String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
+        String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
+        String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] digest = md.digest(payloadToHash.getBytes());
-        java.lang.String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
+        String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
         request.setChecksum(checksum);
 
         // Prepare headers
@@ -173,9 +173,9 @@ public class CrdbDirectMandateService {
                     } else {
                         double numericValue = cell.getNumericCellValue();
                         if (numericValue == Math.floor(numericValue)) {
-                            return java.lang.String.valueOf((long) numericValue);
+                            return String.valueOf((long) numericValue);
                         } else {
-                            return java.lang.String.valueOf(numericValue);
+                            return String.valueOf(numericValue);
                         }
                     }
                 case BOOLEAN:
@@ -443,5 +443,14 @@ public class CrdbDirectMandateService {
             log.info("Fail to send mandate to CRDB due to: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL TO SEND MANDATE TO CRDB");
         }
+    }
+
+    public void save(DirectDebitMandate directDebitMandate) {
+        directMandateRepository.save(directDebitMandate);
+    }
+
+    public List<DirectDebitMandate> findAll() {
+        List<DirectDebitMandate> mandates = directMandateRepository.findAll();
+        return mandates;
     }
 }

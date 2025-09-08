@@ -14,5 +14,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/primeicons/**")
                 .addResourceLocations("classpath:/static/assets/primeicons/")
                 .setCachePeriod(86400);
+
+        registry.addResourceHandler("/templates/**")
+                .addResourceLocations("file:./templates/");
     }
 }
