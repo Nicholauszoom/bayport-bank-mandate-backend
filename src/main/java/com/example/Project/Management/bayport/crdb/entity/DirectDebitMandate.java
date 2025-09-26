@@ -5,6 +5,7 @@ import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -30,10 +31,10 @@ public class DirectDebitMandate extends CommonEntity {
     @Column(name = "request_id")
     private String requestId;
 
-    @Column(name = "phone_number", nullable = false)
+    @Column(name = "phone_number", nullable = false, length = 12)
     private String phoneNumber;
 
-    @Column(name = "debit_account", nullable = false)
+    @Column(name = "debit_account", nullable = false, length = 13)
     private String debitAccount;
 
     @Column(name = "total_amount", nullable = false)
@@ -43,10 +44,10 @@ public class DirectDebitMandate extends CommonEntity {
     private BigDecimal installmentAmount;
 
     @Column(name = "start_date", nullable = false)
-    private String startDate; // Format: "DD-MM-YYYY"
+    private Date startDate; // Format: "DD-MM-YYYY"
 
     @Column(name = "end_date", nullable = false)
-    private String endDate; // Format: "DD-MM-YYYY"
+    private Date endDate; // Format: "DD-MM-YYYY"
 
     @Column(name = "frequency_type", nullable = false)
     private String frequencyType; // DAILY, WEEKLY, MONTHLY, YEARLY
@@ -55,9 +56,25 @@ public class DirectDebitMandate extends CommonEntity {
     private Integer frequency; // Conditional, default 1
 
     @Column(name = "bill_details")
-    private String billDetails; // Optional
+    private String billDetails;
+
+    @Column(name = "failed_reason")
+    private String responseDescription;
+
+    @Column(name = "response_code")
+    private String statusCode;
+
+    @Column(name = "error_code")
+    private String errorCode;
+
+    @Column(name = "error_message")
+    private String errorMessage;
 
     @Column(name = "mandate_request_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private MandateRequestType mandateRequestType;
+
+    @Column(name = "submitted_date")
+    private String submittedDate; // Format: "DD-MM-YYYY"
+
 }

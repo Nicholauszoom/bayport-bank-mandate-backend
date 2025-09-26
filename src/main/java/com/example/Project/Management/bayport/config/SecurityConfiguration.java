@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/login", "/profile**", "/user**", "/dashboard", "/verify", "/mandate-list**", "/create-mandate**","/upload-mandate**", "/view-mandate/**", " /templates/Bayport-Mandate-Template.xlsx").permitAll()
+                        .requestMatchers("/", "/login", "/profile**", "/user**", "/dashboard", "/verify", "/mandate-list**", "/create-mandate**","/upload-mandate**", "/view-mandate/**", "/templates/Bayport-Mandate-Template.xlsx").permitAll()
 
                         .requestMatchers("/static/**", "/media/**", "/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
 
@@ -47,7 +47,7 @@ public class SecurityConfiguration {
 
                         .requestMatchers("/api/auth/**", "/public/**", "/health","/api/loans/message/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/user/**", "/api/charge/**", "/api/direct/debit/mandate/**").hasAnyAuthority("ADMIN", "MANAGER")
+                        .requestMatchers("/api/user/**", "/api/charge/**", "/api/direct/debit/mandate/**", "/api/dashboard/**","/api/mandate/report/**").hasAnyAuthority("ADMIN", "MANAGER")
 
                         .requestMatchers(HttpMethod.GET, "/api/product/**").hasAnyAuthority("USER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/product/create").hasAnyAuthority("MANAGER", "ADMIN")

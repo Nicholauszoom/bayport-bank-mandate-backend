@@ -6,14 +6,12 @@ import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.auth.user.service.UserService;
 import com.example.Project.Management.bayport.util.Response;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,22 +22,17 @@ import java.util.*;
 @Slf4j
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private MessageSource messageSource;
 
     String message = null;
     String status = null;
     Boolean isError = false;
 
-    public UserController(UserService userService, PasswordEncoder passwordEncoder, MessageSource messageSource) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
-        this.messageSource = messageSource;
     }
 
     @GetMapping("/me")
@@ -52,12 +45,12 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable("id") long id) {
         Optional<User> userOpt = userService.findByUserId(id);
-        log.info("userOpt = {}", userOpt.get());
-        if (userOpt.isEmpty()) {
+        if (userOpt.get() == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         User user = userOpt.get();
+        log.info("user: {}", user);
         UserDto dto = new UserDto();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
@@ -70,23 +63,20 @@ public class UserController {
 
 
     @PostMapping("/assign_role")
-    public ResponseEntity<?> assignUserRole(@RequestBody UserDto userDto, HttpServletRequest request){
+    public ResponseEntity<?> assignUserRole(@RequestBody @NonNull UserDto userDto, HttpServletRequest request){
 
         User assignUser = null;
         try {
 
-            if(userDto!=null){
-                log.info("userDto is null");
-                ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userDto is null");
-            }
+            log.info("userDto is null");
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userDto is null");
             Optional<User> user = userService.findByUserId(userDto.getId());
 
-            if(user != null) {
+            if(user.isPresent()) {
 
                 user.get().setRole(Role.valueOf(userDto.getRole()));
-                User updatedUser = userService.saveUser(user.get());
 
-                assignUser = updatedUser;
+                assignUser = userService.saveUser(user.get());
 
                 if(assignUser != null) {
                     log.info("success assigned role, user ID: {}", assignUser.getId());
@@ -98,9 +88,8 @@ public class UserController {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body("no user to assigned role");
             }
 
-
         } catch(Exception e) {
-            log.info("fail to update user", e.getMessage());
+            log.info("fail to update user:{}", e.getMessage());
             ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail to update user");
         }
 
@@ -179,6 +168,4 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("USER INFORMATION FAILED TO UPDATE");
         }
     }
-
-
 }

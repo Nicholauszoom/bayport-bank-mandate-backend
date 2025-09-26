@@ -10,10 +10,7 @@ public interface UserService {
 
     User saveUser(User user);
 
-
     Optional<User> findByUserId(long userId);
-
-    List<User> getAllUsers();
 
     List<User> findAll();
 

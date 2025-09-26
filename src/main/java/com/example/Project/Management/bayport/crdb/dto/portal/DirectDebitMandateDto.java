@@ -38,4 +38,11 @@ public class DirectDebitMandateDto {
 
     private Date createdDate;
 
+    // response
+    private String statusCode;
+    private String responseDescription;
+    private String errorCode;
+    private String errorMessage;
+    private String submittedDate;
+
 }

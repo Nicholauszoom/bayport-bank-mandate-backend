@@ -16,7 +16,7 @@ public class DatshboardController {
     @Autowired
     private DashboardService dashboardService;
 
-    @GetMapping("/api/dashboard")
+    @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<DashboardDto> getDashboard() {
         DashboardDto dashboard = dashboardService.createDashboard();

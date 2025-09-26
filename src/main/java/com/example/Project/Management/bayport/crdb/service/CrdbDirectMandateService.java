@@ -8,9 +8,12 @@ import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType
 import com.example.Project.Management.bayport.crdb.repository.DirectMandateRepository;
 import jakarta.xml.bind.DatatypeConverter;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -20,31 +23,33 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.example.Project.Management.bayport.util.DateFormatter.*;
 
 @Service
 @Slf4j
 public class CrdbDirectMandateService {
     @Value("${crdb.esb.api.url}") // e.g., https://<ESB API GW IP>/direct-debit/1.0.0/mandate/
-    private java.lang.String apiUrl;
-
-    @Value("${crdb.partner.id}") // Your PartnerId, e.g., "fcc19daa-68c9-482e-86cd-a5f1d64cb8d2" (replace with actual)
-    private java.lang.String partnerId;
+    private String apiUrl;
+    @Value("${crdb.partner.id}") //  PartnerId, e.g., "fcc19daa-68c9-482e-86cd-a5f1d64cb8d2" (replace with actual)
+    private String partnerId;
 
     @Value("${crdb.hashing.salt}") // The long salt string, e.g., "kdaz9/m4nSLNUGoFLc5SPSKG/n63wMBTo9Ws3kvbXELm/D0gbAhJpeyQfvhp+Kv7i78TFg6BvOV+64LYax2JSCJcO5ySF1bLSraJUvYbgmUIMKIzP4TBIJQxzPULIHAylLbLMA=="
-    private java.lang.String hashingSalt;
+    private String hashingSalt;
 
-    @Value("${crdb.access.token}") // Your Bearer token (manage securely, e.g., via OAuth or env var)
-    private java.lang.String accessToken;
+    @Value("${crdb.access.token}") //  Bearer token (manage securely, e.g., via OAuth or env var)
+    private String accessToken;
 
     @Value("${crdb.channel}") // e.g., "SIMAPP" (adjust based on your channel)
-    private java.lang.String channel;
+    private String channel;
 
     @Value("${crdb.app.id}") // e.g., "SIMB_MOB"
-    private java.lang.String appId;
+    private String appId;
 
     @Value("${crdb.app.version}") // e.g., "1.0.0"
-    private java.lang.String appVersion;
+    private String appVersion;
 
     private final RestTemplate restTemplate;
 
@@ -108,46 +113,6 @@ public class CrdbDirectMandateService {
 
     public void saveDirectDebitMandateFromExcel(MultipartFile file) throws Exception {
 
-        List<DirectDebitMandate> directDebitMandates = new ArrayList<>();
-
-        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-
-            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null || isRowEmpty(row)) {
-                    continue;
-                }
-                try {
-                    DirectDebitMandate directDebitMandate = new DirectDebitMandate();
-                    directDebitMandate.setPartnerId(partnerId);
-                    directDebitMandate.setPhoneNumber(getStringValue(row.getCell(0), evaluator));
-                    directDebitMandate.setDebitAccount(getStringValue(row.getCell(1), evaluator));
-                    directDebitMandate.setTotalAmount(getBigDecimalValue(row.getCell(2), evaluator));
-                    directDebitMandate.setInstallmentAmount(getBigDecimalValue(row.getCell(3), evaluator));
-                    directDebitMandate.setStartDate(getStringValue(row.getCell(4), evaluator));
-                    directDebitMandate.setEndDate(getStringValue(row.getCell(5), evaluator));
-                    directDebitMandate.setBillDetails(getStringValue(row.getCell(6), evaluator));
-                    directDebitMandate.setFrequencyType(getStringValue(row.getCell(7), evaluator));
-                    directDebitMandate.setFrequency(getIntValue(row.getCell(8), evaluator));
-                    directDebitMandate.setMandateRequestType(MandateRequestType.UPLOADED);
-                    directDebitMandate.setChecksum(generateChecksumByMandate(directDebitMandate));
-                    directDebitMandates.add(directDebitMandate);
-                } catch (Exception e) {
-                    log.warn("Error processing row {}: {}", i, e.getMessage());
-                    // Continue processing other rows
-                }
-            }
-        }
-
-        if (!directDebitMandates.isEmpty()) {
-            directMandateRepository.saveAll(directDebitMandates);
-            log.info("Successfully saved {} mandate records", directDebitMandates.size());
-        } else {
-            log.warn("No valid mandate records found in the Excel file");
-        }
     }
 
     private boolean isRowEmpty(Row row) {
@@ -160,7 +125,7 @@ public class CrdbDirectMandateService {
         return true;
     }
 
-    private java.lang.String getStringValue(Cell cell, FormulaEvaluator evaluator) {
+    private String getStringValue(Cell cell, FormulaEvaluator evaluator) {
         if (cell == null) return null;
 
         try {
@@ -179,7 +144,7 @@ public class CrdbDirectMandateService {
                         }
                     }
                 case BOOLEAN:
-                    return java.lang.String.valueOf(cell.getBooleanCellValue());
+                    return String.valueOf(cell.getBooleanCellValue());
                 case FORMULA:
                     CellValue evaluatedValue = evaluator.evaluate(cell);
                     switch (evaluatedValue.getCellType()) {
@@ -188,12 +153,12 @@ public class CrdbDirectMandateService {
                         case NUMERIC:
                             double value = evaluatedValue.getNumberValue();
                             if (value == Math.floor(value)) {
-                                return java.lang.String.valueOf((long) value);
+                                return String.valueOf((long) value);
                             } else {
-                                return java.lang.String.valueOf(value);
+                                return String.valueOf(value);
                             }
                         case BOOLEAN:
-                            return java.lang.String.valueOf(evaluatedValue.getBooleanValue());
+                            return String.valueOf(evaluatedValue.getBooleanValue());
                         default:
                             return null;
                     }
@@ -214,7 +179,7 @@ public class CrdbDirectMandateService {
                 case NUMERIC:
                     return BigDecimal.valueOf(cell.getNumericCellValue()).setScale(4, RoundingMode.HALF_UP);
                 case STRING:
-                    java.lang.String strValue = cell.getStringCellValue().trim();
+                    String strValue = cell.getStringCellValue().trim();
                     if (strValue.isEmpty()) return null;
                     return new BigDecimal(strValue).setScale(4, RoundingMode.HALF_UP);
                 case FORMULA:
@@ -222,7 +187,7 @@ public class CrdbDirectMandateService {
                     if (evaluatedValue.getCellType() == CellType.NUMERIC) {
                         return BigDecimal.valueOf(evaluatedValue.getNumberValue()).setScale(4, RoundingMode.HALF_UP);
                     } else if (evaluatedValue.getCellType() == CellType.STRING) {
-                        java.lang.String strVal = evaluatedValue.getStringValue().trim();
+                        String strVal = evaluatedValue.getStringValue().trim();
                         if (strVal.isEmpty()) return null;
                         return new BigDecimal(strVal).setScale(4, RoundingMode.HALF_UP);
                     }
@@ -244,7 +209,7 @@ public class CrdbDirectMandateService {
                 case NUMERIC:
                     return cell.getNumericCellValue();
                 case STRING:
-                    java.lang.String strValue = cell.getStringCellValue().trim();
+                    String strValue = cell.getStringCellValue().trim();
                     if (strValue.isEmpty()) return 0.0;
                     return Double.parseDouble(strValue);
                 case FORMULA:
@@ -252,7 +217,7 @@ public class CrdbDirectMandateService {
                     if (evaluatedValue.getCellType() == CellType.NUMERIC) {
                         return evaluatedValue.getNumberValue();
                     } else if (evaluatedValue.getCellType() == CellType.STRING) {
-                        java.lang.String strVal = evaluatedValue.getStringValue().trim();
+                        String strVal = evaluatedValue.getStringValue().trim();
                         if (strVal.isEmpty()) return 0.0;
                         return Double.parseDouble(strVal);
                     }
@@ -274,7 +239,7 @@ public class CrdbDirectMandateService {
                 case NUMERIC:
                     return (int) Math.round(cell.getNumericCellValue());
                 case STRING:
-                    java.lang.String strValue = cell.getStringCellValue().trim();
+                    String strValue = cell.getStringCellValue().trim();
                     if (strValue.isEmpty()) return 0;
                     return (int) Math.round(Double.parseDouble(strValue));
                 case FORMULA:
@@ -282,7 +247,7 @@ public class CrdbDirectMandateService {
                     if (evaluatedValue.getCellType() == CellType.NUMERIC) {
                         return (int) Math.round(evaluatedValue.getNumberValue());
                     } else if (evaluatedValue.getCellType() == CellType.STRING) {
-                        java.lang.String strVal = evaluatedValue.getStringValue().trim();
+                        String strVal = evaluatedValue.getStringValue().trim();
                         if (strVal.isEmpty()) return 0;
                         return (int) Math.round(Double.parseDouble(strVal));
                     }
@@ -312,17 +277,21 @@ public class CrdbDirectMandateService {
                 .debitAccount(directDebitMandate.getDebitAccount())
                 .totalAmount(directDebitMandate.getTotalAmount())
                 .installmentAmount(directDebitMandate.getInstallmentAmount())
-                .startDate(directDebitMandate.getStartDate())
-                .endDate(directDebitMandate.getEndDate())
+                .startDate(formatDateToYyMmDd(directDebitMandate.getStartDate()))
+                .endDate(formatDateToYyMmDd(directDebitMandate.getEndDate()))
                 .frequencyType(directDebitMandate.getFrequencyType())
                 .frequency(Integer.valueOf(directDebitMandate.getFrequency()))
                 .billDetails(directDebitMandate.getBillDetails())
+                .createdDate(directDebitMandate.getCreatedDate())
                 .build();
     }
 
-
-    public List<DirectDebitMandate> findDebitMandateByRequestType(MandateRequestType requestType) {
-    return directMandateRepository.findDebitMandateByRequestType(requestType);
+    public Page<DirectDebitMandate> findDebitMandateByRequestType(MandateRequestType requestType, Pageable pageable) {
+        if (requestType == null) {
+            return directMandateRepository.findAll(pageable);
+        } else {
+            return directMandateRepository.findByRequestTypeWithPageableSort(requestType, pageable);
+        }
     }
 
     public Optional<DirectDebitMandate> findById(long id) {
@@ -331,7 +300,7 @@ public class CrdbDirectMandateService {
 
     public ResponseEntity<?> registerDirectDebitMandateForm(DirectDebitMandateDto directDebitMandateDto) {
        try{
-           java.lang.String checksum = generateChecksumByMandateDto(directDebitMandateDto);
+           String checksum = generateChecksumByMandateDto(directDebitMandateDto);
 
            DirectDebitMandate directDebitMandate = DirectDebitMandate.builder()
                    .checksum(checksum)
@@ -340,8 +309,8 @@ public class CrdbDirectMandateService {
                    .debitAccount(directDebitMandateDto.getDebitAccount())
                    .totalAmount(directDebitMandateDto.getTotalAmount())
                    .installmentAmount(directDebitMandateDto.getInstallmentAmount())
-                   .startDate(directDebitMandateDto.getStartDate())
-                   .endDate(directDebitMandateDto.getEndDate())
+                   .startDate(ddMmYyStringToDate(directDebitMandateDto.getStartDate()))
+                   .endDate(ddMmYyStringToDate(directDebitMandateDto.getEndDate()))
                    .frequencyType(directDebitMandateDto.getFrequencyType())
                    .frequency(directDebitMandateDto.getFrequency())
                    .billDetails(directDebitMandateDto.getBillDetails())
@@ -354,31 +323,32 @@ public class CrdbDirectMandateService {
        }
     }
 
-    public java.lang.String generateChecksumByMandateDto(DirectDebitMandateDto request) throws Exception {
+    public String generateChecksumByMandateDto(DirectDebitMandateDto request) throws Exception {
         // Generate unique RequestId (UUID)
-        java.lang.String requestId = UUID.randomUUID().toString();
-        java.lang.String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
-        java.lang.String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
+        String requestId = UUID.randomUUID().toString();
+        String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
+        String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] digest = md.digest(payloadToHash.getBytes());
-        java.lang.String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
+        String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
         return checksum;
     }
 
-    public java.lang.String generateChecksumByMandate(DirectDebitMandate request) throws Exception {
+    public String generateChecksumByMandate(DirectDebitMandate request) throws Exception {
         // Generate unique RequestId (UUID)
-        java.lang.String requestId = UUID.randomUUID().toString();
-        java.lang.String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
-        java.lang.String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
+        String requestId = UUID.randomUUID().toString();
+        String debitAccountLast4 = request.getDebitAccount().substring(request.getDebitAccount().length() - 4);
+        String payloadToHash = requestId + debitAccountLast4 + request.getPartnerId() + hashingSalt;
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] digest = md.digest(payloadToHash.getBytes());
-        java.lang.String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
+        String checksum = DatatypeConverter.printHexBinary(digest).toLowerCase();
         return checksum;
     }
 
     public ResponseEntity<?> submitMandate(List<Long> ids) {
         try {
             log.info("submitMandate request: {}", ids);
+            LocalDateTime now = LocalDateTime.now();
             for (Long id : ids) {
                 Optional<DirectDebitMandate> directDebitMandateOptional = directMandateRepository.findById(id);
                 if (directDebitMandateOptional.isEmpty()) {
@@ -393,48 +363,74 @@ public class CrdbDirectMandateService {
                         .debitAccount(directDebitMandate.getDebitAccount())
                         .totalAmount(directDebitMandate.getTotalAmount())
                         .installmentAmount(directDebitMandate.getInstallmentAmount())
-                        .startDate(directDebitMandate.getStartDate())
-                        .endDate(directDebitMandate.getEndDate())
+                        .startDate(formatDateToYyMmDd(directDebitMandate.getStartDate()))
+                        .endDate(formatDateToYyMmDd(directDebitMandate.getEndDate()))
                         .frequencyType(directDebitMandate.getFrequencyType())
                         .frequency(directDebitMandate.getFrequency())
                         .billDetails(directDebitMandate.getBillDetails())
                         .build();
 
-                DirectDebitMandateResponse directDebitMandateResponse = initiateDirectDebit(directDebitMandateRequest);
-                log.info("direct debit mandate response: {}", directDebitMandateResponse);
+                // USED EVEN TO PRODUCTION AND TEST
+                directDebitMandate.setMandateRequestType(MandateRequestType.PRESUBMITTED);
+                directMandateRepository.save(directDebitMandate);
 
-                if (directDebitMandateResponse != null
-                        && directDebitMandateResponse.getResponseHeader()!= null) {
+                // FOR TEST PURPOSES
+                log.info("submitMandate request to CRDB: {}", directDebitMandateRequest);
+                directDebitMandate.setStatusCode("1000");
+                directDebitMandate.setResponseDescription("OK");
+                directDebitMandate.setMandateRequestType(MandateRequestType.SUBMITTED);
+                directDebitMandate.setSubmittedDate(String.valueOf(now));
+                directMandateRepository.save(directDebitMandate);
 
-                    DirectDebitMandateResponse.ResponseHeader header = directDebitMandateResponse.getResponseHeader();
 
-                    if (header.getStatusCode() != null && header.getStatusCode() == 1000) {
-                        log.info("Mandate request successful: {}", directDebitMandateResponse);
 
-                        DirectDebitMandateResponse.ResponseBody body = directDebitMandateResponse.getResponseBody();
-                        if (body != null) {
-                            log.info("Reference ID: {}", body.getReference());
-                            log.info("Body RequestId: {}", body.getRequestId());
-                        }
-                        // update mandate
-                        directDebitMandate.setMandateRequestType(MandateRequestType.SUBMITTED);
-                        directMandateRepository.save(directDebitMandate);
-                    } else {
-                        log.error("Mandate request failed: {} - {}",
-                                header.getStatusCode(),
-                                header.getStatusMessage());
-
-                        // update mandate
-                        directDebitMandate.setMandateRequestType(MandateRequestType.FAILED);
-                        directMandateRepository.save(directDebitMandate);
-                    }
-
-                } else {
-                    log.error("Empty or invalid response from direct debit API");
-                    // update mandate
-                    directDebitMandate.setMandateRequestType(MandateRequestType.FAILED);
-                    directMandateRepository.save(directDebitMandate);
-                }
+                // FOR PRODUCTION PURPOSES
+//              DirectDebitMandateResponse directDebitMandateResponse = initiateDirectDebit(directDebitMandateRequest);
+//              log.info("direct debit mandate response: {}", directDebitMandateResponse);
+//
+//                if (directDebitMandateResponse != null
+//                        && directDebitMandateResponse.getResponseHeader()!= null) {
+//
+//                    DirectDebitMandateResponse.ResponseHeader header = directDebitMandateResponse.getResponseHeader();
+//
+//                    if (header.getStatusCode() != null && header.getStatusCode() == 1000) {
+//                        log.info("Mandate request successful: {}", directDebitMandateResponse);
+//
+//                        DirectDebitMandateResponse.ResponseBody body = directDebitMandateResponse.getResponseBody();
+//                        if (body != null) {
+//                            log.info("Reference ID: {}", body.getReference());
+//                            log.info("Body RequestId: {}", body.getRequestId());
+//                        }
+//                        log.info("Mandate General success request-response: {}", directDebitMandateResponse);
+//
+//                        // update mandate
+//                        directDebitMandate.setStatusCode(String.valueOf(header.getStatusCode()));
+//                        directDebitMandate.setResponseDescription(header.getStatusDesc());
+//                        directDebitMandate.setMandateRequestType(MandateRequestType.SUBMITTED);
+//                        directDebitMandate.setSubmittedDate(String.valueOf(now));
+//                        directMandateRepository.save(directDebitMandate);
+//                    } else {
+//                        log.info("Mandate General fail request-response: {}", directDebitMandateResponse);
+//                        log.error("Mandate request failed: {} - {}",
+//                                header.getStatusCode(),
+//                                header.getStatusMessage());
+//
+//                        // update mandate
+//                        directDebitMandate.setMandateRequestType(MandateRequestType.FAILED);
+//                        directDebitMandate.setStatusCode(String.valueOf(header.getStatusCode()));
+//                        directDebitMandate.setErrorCode(String.valueOf(header.getErrorCode()));
+//                        directDebitMandate.setErrorMessage(header.getErrorMessage());
+//                        directDebitMandate.setResponseDescription(header.getStatusDesc());
+//                        directDebitMandate.setSubmittedDate(String.valueOf(now));
+//                        directMandateRepository.save(directDebitMandate);
+//                    }
+//
+//                } else {
+//                    log.error("Empty or invalid response from direct debit API");
+//                    // update mandate
+//                    directDebitMandate.setMandateRequestType(MandateRequestType.FAILED);
+//                    directMandateRepository.save(directDebitMandate);
+//                }
             }
 
             log.info("Successfull send mandate request to CRDB : {}");
@@ -452,5 +448,41 @@ public class CrdbDirectMandateService {
     public List<DirectDebitMandate> findAll() {
         List<DirectDebitMandate> mandates = directMandateRepository.findAll();
         return mandates;
+    }
+
+    public void deleteById(long id) {
+        Optional<DirectDebitMandate> directDebitMandateOptional = directMandateRepository.findById(id);
+        if (directDebitMandateOptional.isEmpty()) {
+            log.info("Mandate not found with id: {}", id);
+        }
+        String requestType = directDebitMandateOptional.get().getMandateRequestType().name();
+        if (requestType.equals(MandateRequestType.SUBMITTED)) {
+            log.info("Mandate not allowed to be deleted coz Request Type is SUBMITTED: {}", id);
+        }
+        directMandateRepository.deleteById(id);
+    }
+
+    public ResponseEntity<?> deleteMandates(@NonNull List<Long> ids) {
+        try {
+            log.info("delete Mandate request: {}", ids);
+            for (Long id : ids)  {
+                Optional<DirectDebitMandate> directDebitMandateOptional = directMandateRepository.findById(id);
+                if (directDebitMandateOptional.isEmpty()) {
+                    log.info("Mandate not found with id: {}", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("MANDATE NOT FOUIND");
+                }
+                directMandateRepository.deleteById(id);
+            }
+
+            log.info("ALL ITEMS DELETED SUCCESSFULLY: {}");
+            return ResponseEntity.status(HttpStatus.OK).body("ALL ITEMS DELETED SUCCESSFULLY");
+        } catch (Exception e) {
+            log.info("Delete Mandate request failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("FAIL TO DELETE");
+        }
+    }
+
+    public List<DirectDebitMandate> findDebitMandatesByRequestType(MandateRequestType mandateRequestType) {
+        return directMandateRepository.findDebitMandateByRequestType(mandateRequestType);
     }
 }

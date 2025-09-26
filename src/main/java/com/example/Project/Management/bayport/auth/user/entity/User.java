@@ -1,6 +1,5 @@
 package com.example.Project.Management.bayport.auth.user.entity;
 
-
 import com.example.Project.Management.bayport.auth.enumerated.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -57,7 +56,6 @@ public class User implements UserDetails {
     }
 
     public User() {
-
     }
 
     public String getFullName() {

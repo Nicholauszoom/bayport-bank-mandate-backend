@@ -1,8 +1,5 @@
 package com.example.Project.Management.bayport.crdb.controller;
 
-import com.example.Project.Management.bayport.auth.enumerated.Role;
-import com.example.Project.Management.bayport.auth.user.dto.UserDto;
-import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.crdb.dto.portal.DirectDebitMandateDto;
 import com.example.Project.Management.bayport.crdb.entity.DirectDebitMandate;
 import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType;
@@ -11,13 +8,15 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+
+import static com.example.Project.Management.bayport.util.DateFormatter.formatDateToYyMmDd;
 
 @Controller
 @Slf4j
@@ -50,7 +49,7 @@ public class DirectDebitMandateController {
 //@CustomAnnotations.RequirePermission(Permission.MANAGE_USERS)
     public ResponseEntity<List<DirectDebitMandateDto>> getDebitMandateList(@RequestParam(required = false) MandateRequestType requestType) {
         try {
-            List<DirectDebitMandate> mandates = crdbDirectMandateService.findDebitMandateByRequestType(requestType);
+            List<DirectDebitMandate> mandates = crdbDirectMandateService.findDebitMandatesByRequestType(requestType);
 
             if (mandates == null || mandates.isEmpty()) {
                 log.info("No mandates found");
@@ -66,8 +65,8 @@ public class DirectDebitMandateController {
                             .debitAccount(mandate.getDebitAccount())
                             .totalAmount(mandate.getTotalAmount())
                             .installmentAmount(mandate.getInstallmentAmount())
-                            .startDate(mandate.getStartDate())
-                            .endDate(mandate.getEndDate())
+                            .startDate(String.valueOf(mandate.getStartDate()))
+                            .endDate(String.valueOf(mandate.getEndDate()))
                             .frequencyType(mandate.getFrequencyType())
                             .frequency(Integer.valueOf(mandate.getFrequency()))
                             .billDetails(mandate.getBillDetails())
@@ -97,6 +96,8 @@ public class DirectDebitMandateController {
 //    @CustomAnnotations.RequirePermission(Permission.MANAGE_USERS)
     public ResponseEntity<?> getDirectDebitMandateById(@PathVariable long id) throws Exception {
         try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
             Optional<DirectDebitMandate> directDebitMandateOption = crdbDirectMandateService.findById(id);
 
             if (directDebitMandateOption == null || directDebitMandateOption.isEmpty()) {
@@ -114,12 +115,17 @@ public class DirectDebitMandateController {
                     .debitAccount(directDebitMandate.getDebitAccount())
                     .totalAmount(directDebitMandate.getTotalAmount())
                     .installmentAmount(directDebitMandate.getInstallmentAmount())
-                    .startDate(directDebitMandate.getStartDate())
-                    .endDate(directDebitMandate.getEndDate())
+                    .startDate(formatDateToYyMmDd(directDebitMandate.getStartDate()))
+                    .endDate(formatDateToYyMmDd(directDebitMandate.getEndDate()))
                     .frequencyType(directDebitMandate.getFrequencyType())
                     .frequency(Integer.valueOf(directDebitMandate.getFrequency()))
                     .billDetails(directDebitMandate.getBillDetails())
                     .mandateRequestType(directDebitMandate.getMandateRequestType())
+                    .statusCode(directDebitMandate.getStatusCode())
+                    .responseDescription(directDebitMandate.getResponseDescription())
+                    .errorCode(directDebitMandate.getErrorCode())
+                    .errorMessage(directDebitMandate.getErrorMessage())
+                    .submittedDate(directDebitMandate.getSubmittedDate())
                     .createdDate(directDebitMandate.getCreatedDate())
                     .build();
 
@@ -142,9 +148,15 @@ public class DirectDebitMandateController {
     public ResponseEntity<?> updateMandate(@PathVariable("id") long id,
                                            @RequestBody DirectDebitMandateDto directDebitMandateDto) {
         try {
+            log.info("details: {}", directDebitMandateDto);
             Optional<DirectDebitMandate> directDebitMandateOptional = crdbDirectMandateService.findById(id);
             if (directDebitMandateOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Mandate not found");
+            }
+            String requestType = directDebitMandateOptional.get().getMandateRequestType().name();
+
+            if (requestType.equals(MandateRequestType.SUBMITTED)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mandate NOT ALLOWED TO BE EDITED");
             }
 
             DirectDebitMandate directDebitMandate = directDebitMandateOptional.get();
@@ -152,8 +164,8 @@ public class DirectDebitMandateController {
             directDebitMandate.setDebitAccount(directDebitMandateDto.getDebitAccount());
             directDebitMandate.setTotalAmount(directDebitMandateDto.getTotalAmount());
             directDebitMandate.setInstallmentAmount(directDebitMandateDto.getInstallmentAmount());
-            directDebitMandate.setStartDate(directDebitMandateDto.getStartDate());
-            directDebitMandate.setEndDate(directDebitMandateDto.getEndDate());
+//            directDebitMandate.setStartDate(ddMmYyStringToDate(directDebitMandateDto.getStartDate()));
+//            directDebitMandate.setEndDate(ddMmYyStringToDate(directDebitMandateDto.getEndDate()));
             directDebitMandate.setFrequencyType(directDebitMandateDto.getFrequencyType());
             directDebitMandate.setFrequency(directDebitMandateDto.getFrequency());
             directDebitMandate.setBillDetails(directDebitMandateDto.getBillDetails());
@@ -165,5 +177,28 @@ public class DirectDebitMandateController {
             log.error("Update failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("DIRECT MANDATE FAILED TO UPDATE");
         }
+    }
+
+    @PostMapping("/{id}/delete")
+    public ResponseEntity<?> deleteMandate(@PathVariable("id") long id) {
+        try {
+            Optional<DirectDebitMandate> mandateOpt = crdbDirectMandateService.findById(id);
+            if (mandateOpt.isEmpty()) {
+                log.info("Mandate not found with id {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("MANDATE NOT FOUND");
+            }
+            crdbDirectMandateService.deleteById(id);
+            log.info("success delete mandate with id {}", id);
+            return ResponseEntity.status(HttpStatus.OK).body("DELETE MANDATE SUCCESSFULLY");
+        }
+        catch (Exception e) {
+        log.info("Delete failed: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.OK).body("FAIL TO DELETE MANDATE");
+        }
+    }
+
+    @PostMapping("/delete/mandate")
+    public ResponseEntity<?> deleteMandates(@NonNull @RequestBody List<Long> ids) throws Exception {
+        return crdbDirectMandateService.deleteMandates(ids);
     }
 }

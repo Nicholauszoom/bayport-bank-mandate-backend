@@ -3,8 +3,6 @@ package com.example.Project.Management.bayport.controller;
 import com.example.Project.Management.bayport.auth.user.dto.UserDto;
 import com.example.Project.Management.bayport.auth.user.entity.User;
 import com.example.Project.Management.bayport.auth.user.service.UserService;
-import com.example.Project.Management.bayport.config.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +27,7 @@ public class AdminController {
 
     @GetMapping("/user/list")
 //    @CustomAnnotations.RequirePermission(Permission.MANAGE_USERS)
-    public ResponseEntity<?> getUserList(HttpServletRequest request, JwtAuthenticationFilter auth) {
+    public ResponseEntity<?> getUserList() {
 
         List<UserDto> userDtoArrayList = new ArrayList<>();
         try {

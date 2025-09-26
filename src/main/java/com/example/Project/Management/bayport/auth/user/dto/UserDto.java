@@ -3,6 +3,7 @@ package com.example.Project.Management.bayport.auth.user.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
@@ -14,6 +15,7 @@ import java.io.Serializable;
 @Builder
 public class UserDto implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Long id;
 
@@ -26,8 +28,4 @@ public class UserDto implements Serializable {
     private String fullName;
 
     private String username;
-
-
-
-
 }

@@ -1,7 +1,6 @@
 package com.example.Project.Management.bayport.auth.dto;
 
 import com.example.Project.Management.bayport.auth.enumerated.Role;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 

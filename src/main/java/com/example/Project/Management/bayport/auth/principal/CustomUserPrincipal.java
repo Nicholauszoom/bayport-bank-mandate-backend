@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -61,10 +60,6 @@ public class CustomUserPrincipal implements UserDetails {
     // Convenience methods
     public User getUser() {
         return user;
-    }
-
-    public Long getUserId() {
-        return user.getId();
     }
 
     public Role getRole() {
