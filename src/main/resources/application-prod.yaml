@@ -1,7 +1,7 @@
 spring:
   datasource:
     hikari.schema: public
-    url: jdbc:postgresql://localhost:5432/project_management_bayport?serverTimezone=UTC
+    url: jdbc:postgresql://localhost:5432/bayport-mandate?serverTimezone=UTC
     username: postgres
     password: SOMI
   #Email service
@@ -16,7 +16,7 @@ spring:
           port: 587
           auth: true
           starttls.enable: true
-          ssl.enable: true
+  #          ssl.enable: true
 
 # KEY CONFIGS
 dflex:
@@ -25,3 +25,33 @@ dflex:
     public: dflexpublic.pfx
     alias: dflex.co.tz
     password: $flex4dm1n
+
+
+# LOGGING CONFIGS
+logging:
+  level:
+    root: INFO
+    com.yourcompany.yourapp: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+
+# SECURITY CRDB CONFIGS
+#crdb:
+#  channel: SIMAPP
+#  app:
+#    id: SIMB_MOB
+#    version: 1.0.0
+#  esb:
+#    api:
+#      url: https://<ESB API GW IP>/direct-debit/1.0.0/mandate/
+#  partner:
+#    id: fcc19daa-68c9-482e-86cd-a5f1d64cb8d2
+#  hashing:
+#    salt: kdaz9/m4nSLNUGoFLc5SPSKG/n63wMBTo9Ws3kvbXELm/D0gbAhJpeyQfvhp+Kv7i78TFg6BvOV+64LYax2JSCJcO5ySF1bLSraJUvYbgmUIMKIzP4TBIJQxzPULIHAylLbLMA==
+#  access:
+#    token:
+#  token:
+#    url: https://<ESB API GW IP>/oauth/token
+#

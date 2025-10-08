@@ -35,3 +35,28 @@ logging:
     org.springframework.web: WARN
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+
+
+
+# SECURITY CRDB CONFIGS
+crdb:
+  channel: SIMAPP
+  app:
+    id: SIMB_MOB
+    version: 1.0.0
+  esb:
+    api:
+     url: http://localhost:8888/mock/crdb/mandate/submit/failure
+  partner:
+    id: fcc19daa-68c9-482e-86cd-a5f1d64cb8d2
+  hashing:
+    salt: kdaz9/m4nSLNUGoFLc5SPSKG/n63wMBTo9Ws3kvbXELm/D0gbAhJpeyQfvhp+Kv7i78TFg6BvOV+64LYax2JSCJcO5ySF1bLSraJUvYbgmUIMKIzP4TBIJQxzPULIHAylLbLMA==
+  access:
+    token:
+  token:
+    url: http://localhost:8888/oauth/token
+
+  client:
+        id: fcc19daa-68c9-482e-86cd-a5f1d64cb8d2
+        secret: FbolLpK2RNBUu+GNihVs9HISHJ1eX184fKUkXUkpSly9IFhjtlQC+KypiZTA+nTow8xeBW+beDGjsa8kEZRhaQ==
+

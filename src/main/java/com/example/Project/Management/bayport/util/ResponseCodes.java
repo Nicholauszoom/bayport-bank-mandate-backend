@@ -32,7 +32,7 @@ public class ResponseCodes {
     public static final int INVALID_TEAMS_LOAN_CODE=8026;
 
     public static final int DECCOMMISSION_SUCCESSFUL=8027;
-    public static final int INTERNAL_SERVER_ERROR = 500 ;
+    public static final int INTERNAL_SERVER_ERROR = 500;
 
     public static final int TRUE =1;
 
