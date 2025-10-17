@@ -4,13 +4,26 @@ import com.example.Project.Management.bayport.crdb.dto.portal.MandateReportDto;
 import com.example.Project.Management.bayport.crdb.entity.DirectDebitMandate;
 import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType;
 import com.example.Project.Management.bayport.crdb.repository.DirectMandateRepository;
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -83,7 +96,7 @@ public class MandateReportServiceImpl implements MandateReportService {
 
     @Override
     public List<MandateReportDto> getSuccessMandatesReport(LocalDate startDate, LocalDate endDate) {
-        List<DirectDebitMandate> mandates = directMandateRepository.findDebitMandateByRequestType(MandateRequestType.SUBMITTED);
+        List<DirectDebitMandate> mandates = directMandateRepository.findDebitMandatesByRequestTypeNonPageable(MandateRequestType.SUBMITTED);
         return filterByDateRange(mandates, startDate, endDate).stream()
                 .filter(this::isSuccessMandate)
                 .map(this::convertToReportDto)
@@ -130,7 +143,7 @@ public class MandateReportServiceImpl implements MandateReportService {
             switch (format.toLowerCase()) {
                 case "pdf":
                     return generatePdfReport(reportData, reportType);
-                case "excel":
+                case "xlsx":
                     return generateExcelReport(reportData, reportType);
                 case "csv":
                     return generateCsvReport(reportData, reportType);
@@ -205,9 +218,96 @@ public class MandateReportServiceImpl implements MandateReportService {
 
     // PDF Report Generation using iText
     private byte[] generatePdfReport(List<MandateReportDto> data, String reportType) {
-        return null;
-    }
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            // Initialize PDF writer and document
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
 
+            // Set up fonts
+            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+
+            // Add title
+            Paragraph title = new Paragraph("Direct Debit Mandate Report")
+                    .setFont(boldFont)
+                    .setFontSize(20)
+                    .setBold()
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(title);
+
+            // Add report type
+            Paragraph reportTypeTitle = new Paragraph("Report Type: " + reportType.toUpperCase())
+                    .setFont(regularFont)
+                    .setFontSize(14)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(reportTypeTitle);
+
+            // Add generation date
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            Paragraph dateInfo = new Paragraph("Generated on: " + LocalDateTime.now().format(formatter))
+                    .setFont(regularFont)
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontColor(ColorConstants.GRAY);
+            document.add(dateInfo);
+
+            // Add spacing
+            document.add(new Paragraph("\n"));
+
+            // Add summary section
+            Paragraph summaryTitle = new Paragraph("Summary")
+                    .setFont(boldFont)
+                    .setFontSize(14)
+                    .setBold();
+            document.add(summaryTitle);
+
+            BigDecimal totalAmount = data.stream()
+                    .map(MandateReportDto::getTotalAmount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            long successCount = data.stream()
+                    .filter(d -> "SUCCESS".equals(d.getStatus()))
+                    .count();
+
+            long failedCount = data.stream()
+                    .filter(d -> "FAILED".equals(d.getStatus()))
+                    .count();
+
+            Paragraph summary = new Paragraph(
+                    "Total Records: " + data.size() +
+                            "\nSuccess: " + successCount +
+                            "\nFailed: " + failedCount +
+                            "\nTotal Amount: " + totalAmount.toString())
+                    .setFont(regularFont)
+                    .setFontSize(10);
+            document.add(summary);
+            document.add(new Paragraph("\n"));
+
+            // Add table headers
+            String[] headers = {"ID", "Partner ID", "Phone Number", "Account",
+                    "Total Amount", "Installment", "Status", "Created Date"};
+
+            // Add footer
+            document.add(new Paragraph("\n"));
+            Paragraph footer = new Paragraph("End of Report - Total Records: " + data.size())
+                    .setFont(regularFont)
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontColor(ColorConstants.GRAY);
+            document.add(footer);
+
+            // Close document
+            document.close();
+
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Error generating PDF report: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate PDF report", e);
+        }
+    }
     // Excel Report Generation using Apache POI
     private byte[] generateExcelReport(List<MandateReportDto> data, String reportType) {
         try (Workbook workbook = new XSSFWorkbook();
@@ -289,6 +389,44 @@ public class MandateReportServiceImpl implements MandateReportService {
 
     // CSV Report Generation using Apache Commons CSV
     private byte[] generateCsvReport(List<MandateReportDto> data, String reportType) {
-       return null;
+        try (StringWriter sw = new StringWriter();
+             CSVPrinter csvPrinter = new CSVPrinter(sw, CSVFormat.DEFAULT
+                     .withHeader("ID", "Partner ID", "Phone Number", "Debit Account",
+                             "Total Amount", "Installment Amount", "Start Date", "End Date",
+                             "Frequency Type", "Frequency", "Status", "Status Code",
+                             "Response Description", "Error Code", "Error Message",
+                             "Submitted Date", "Created Date", "Failure Reason"))) {
+
+            // Write each mandate record
+            for (MandateReportDto dto : data) {
+                csvPrinter.printRecord(
+                        dto.getId(),
+                        dto.getPartnerId() != null ? dto.getPartnerId() : "",
+                        dto.getPhoneNumber() != null ? dto.getPhoneNumber() : "",
+                        dto.getDebitAccount() != null ? dto.getDebitAccount() : "",
+                        dto.getTotalAmount() != null ? dto.getTotalAmount().toString() : "",
+                        dto.getInstallmentAmount() != null ? dto.getInstallmentAmount().toString() : "",
+                        dto.getStartDate() != null ? dto.getStartDate().toString() : "",
+                        dto.getEndDate() != null ? dto.getEndDate().toString() : "",
+                        dto.getFrequencyType() != null ? dto.getFrequencyType() : "",
+                        dto.getFrequency() != null ? dto.getFrequency().toString() : "",
+                        dto.getStatus() != null ? dto.getStatus() : "",
+                        dto.getStatusCode() != null ? dto.getStatusCode() : "",
+                        dto.getResponseDescription() != null ? dto.getResponseDescription() : "",
+                        dto.getErrorCode() != null ? dto.getErrorCode() : "",
+                        dto.getErrorMessage() != null ? dto.getErrorMessage() : "",
+                        dto.getSubmittedDate() != null ? dto.getSubmittedDate().toString() : "",
+                        dto.getCreatedDate() != null ? dto.getCreatedDate().toString() : "",
+                        dto.getFailureReason() != null ? dto.getFailureReason() : ""
+                );
+            }
+
+            csvPrinter.flush();
+            return sw.toString().getBytes();
+
+        } catch (IOException e) {
+            log.error("Error generating CSV report: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate CSV report", e);
+        }
     }
 }

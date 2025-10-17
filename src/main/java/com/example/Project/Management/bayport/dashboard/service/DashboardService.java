@@ -45,8 +45,8 @@ public class DashboardService {
         }
 
         List<DirectDebitMandate> mandates = crdbDirectMandateService.findAll();
-        List<DirectDebitMandate> successMandates = crdbDirectMandateService.findDebitMandatesByRequestType(MandateRequestType.SUBMITTED);
-        List<DirectDebitMandate> failMandates = crdbDirectMandateService.findDebitMandatesByRequestType(MandateRequestType.FAILED);
+        List<DirectDebitMandate> successMandates = crdbDirectMandateService.findDebitMandatesByRequestTypeNonPageable(MandateRequestType.SUBMITTED);
+        List<DirectDebitMandate> failMandates = crdbDirectMandateService.findDebitMandatesByRequestTypeNonPageable(MandateRequestType.FAILED);
 
         DashboardDto statistics = DashboardDto.builder()
                 .totalUsers(userList.size())

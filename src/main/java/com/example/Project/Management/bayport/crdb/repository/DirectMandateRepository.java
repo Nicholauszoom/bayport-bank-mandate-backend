@@ -31,7 +31,7 @@ public interface DirectMandateRepository extends JpaRepository<DirectDebitMandat
     List<DirectDebitMandate> searchDirectDebitMandate(@Param("term") String term, @Param("requestType") MandateRequestType requestType);
 
     @Query("SELECT d FROM DirectDebitMandate d WHERE d.mandateRequestType = :requestType ORDER BY d.createdDate DESC")
-    List<DirectDebitMandate> findDebitMandateByRequestType(MandateRequestType requestType);
+    Page<DirectDebitMandate> findDebitMandateByRequestType(MandateRequestType requestType, Pageable pageable);
 
     @Query("SELECT d FROM DirectDebitMandate d WHERE d.mandateRequestType = :requestType ORDER BY d.createdDate DESC")
     Page<DirectDebitMandate> findByRequestTypeWithPageableSort(MandateRequestType requestType, Pageable pageable);
@@ -46,4 +46,6 @@ public interface DirectMandateRepository extends JpaRepository<DirectDebitMandat
             @Param("endDate") LocalDate endDate
     );
 
+    @Query("SELECT d FROM DirectDebitMandate d WHERE d.mandateRequestType = :requestType ORDER BY d.createdDate DESC")
+    List<DirectDebitMandate> findDebitMandatesByRequestTypeNonPageable(MandateRequestType requestType);
 }

@@ -97,7 +97,7 @@ public class CrdbDirectMandateService {
         // Prepare entity
         HttpEntity<DirectDebitMandateRequest> entity = new HttpEntity<>(request, headers);
 
-        log.info("Prepared mandate request to be sent to CRDB: {}", entity.toString());
+        log.info("Prepared mandate request to be sent to CRDB: {}", entity);
 
         try {
             // Make the POST call
@@ -535,7 +535,11 @@ public class CrdbDirectMandateService {
         }
     }
 
-    public List<DirectDebitMandate> findDebitMandatesByRequestType(MandateRequestType mandateRequestType) {
-        return directMandateRepository.findDebitMandateByRequestType(mandateRequestType);
+    public Page<DirectDebitMandate> findDebitMandatesByRequestType(MandateRequestType mandateRequestType, Pageable pageable) {
+        return directMandateRepository.findDebitMandateByRequestType(mandateRequestType, pageable);
+    }
+
+    public List<DirectDebitMandate> findDebitMandatesByRequestTypeNonPageable(MandateRequestType mandateRequestType) {
+        return directMandateRepository.findDebitMandatesByRequestTypeNonPageable(mandateRequestType);
     }
 }

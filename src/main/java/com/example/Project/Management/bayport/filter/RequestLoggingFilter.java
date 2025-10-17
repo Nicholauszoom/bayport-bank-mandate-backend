@@ -21,7 +21,6 @@ public class RequestLoggingFilter implements Filter {
 
     }
 
-
     @Override
     public void destroy() {
     }

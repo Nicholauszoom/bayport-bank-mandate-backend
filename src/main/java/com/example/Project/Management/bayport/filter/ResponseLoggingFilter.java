@@ -23,5 +23,4 @@ public class ResponseLoggingFilter implements Filter {
     @Override
     public void destroy() {
     }
-
 }

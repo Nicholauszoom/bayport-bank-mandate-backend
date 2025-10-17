@@ -6,6 +6,10 @@ import com.example.Project.Management.bayport.crdb.enumerated.MandateRequestType
 import com.example.Project.Management.bayport.crdb.service.CrdbDirectMandateService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -46,17 +50,26 @@ public class DirectDebitMandateController {
     }
 
     @GetMapping("/list")
-//@CustomAnnotations.RequirePermission(Permission.MANAGE_USERS)
-    public ResponseEntity<List<DirectDebitMandateDto>> getDebitMandateList(@RequestParam(required = false) MandateRequestType requestType) {
+    //@CustomAnnotations.RequirePermission(Permission.MANAGE_USERS)
+    public ResponseEntity<Page<DirectDebitMandateDto>> getDebitMandateList(@RequestParam(required = false) MandateRequestType requestType,
+                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                           @RequestParam(defaultValue = "createdDate") String sortBy,
+                                                                           @RequestParam(defaultValue = "DESC") String sortDirection) {
         try {
-            List<DirectDebitMandate> mandates = crdbDirectMandateService.findDebitMandatesByRequestType(requestType);
+
+            Sort sort = Sort.by(sortBy).descending();
+
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            Page<DirectDebitMandate> mandates = crdbDirectMandateService.findDebitMandatesByRequestType(requestType, pageable);
 
             if (mandates == null || mandates.isEmpty()) {
                 log.info("No mandates found");
-                return ResponseEntity.ok(List.of());
+                return ResponseEntity.ok(Page.empty(pageable));
             }
 
-            List<DirectDebitMandateDto> directDebitMandateDtos = mandates.stream()
+            Page<DirectDebitMandateDto> directDebitMandateDtos = mandates
                     .map(mandate -> DirectDebitMandateDto.builder()
                             .id(mandate.getId())
                             .checksum(mandate.getChecksum())
@@ -71,18 +84,20 @@ public class DirectDebitMandateController {
                             .frequency(Integer.valueOf(mandate.getFrequency()))
                             .billDetails(mandate.getBillDetails())
                             .createdDate(mandate.getCreatedDate())
-
                             .build()
-                    )
-                    .toList();
+                    );
 
-            log.info("Successfully fetched {} direct debit mandate", directDebitMandateDtos.size());
+            log.info("Successfully fetched {} direct debit mandates (page {} of {})",
+                    directDebitMandateDtos.getNumberOfElements(),
+                    directDebitMandateDtos.getNumber() + 1,
+                    directDebitMandateDtos.getTotalPages());
+
             return ResponseEntity.ok(directDebitMandateDtos);
 
         } catch (Exception e) {
-            log.error("Error fetching direct debit mandate list: {}", e);
+            log.info("Error fetching direct debit mandate list: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
+                    .body(Page.empty());
         }
     }
 
